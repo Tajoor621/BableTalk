@@ -114,6 +114,7 @@
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
+				BA6210010000000000000005 /* Copy optional Nawah pack */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
@@ -242,6 +243,17 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BabelTalk/Pods-BabelTalk-resources.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		BA6210010000000000000005 /* Copy optional Nawah pack */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			inputPaths = ();
+			name = "Copy optional Nawah pack";
+			outputPaths = ();
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ -d \"$SRCROOT/../generated-assets/nawah\" ]; then mkdir -p \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/nawah\"; ditto \"$SRCROOT/../generated-assets/nawah\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/nawah\"; fi";
 		};
 /* End PBXShellScriptBuildPhase section */
 

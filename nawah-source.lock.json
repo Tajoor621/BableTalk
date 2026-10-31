@@ -1,0 +1,31 @@
+{
+  "revision": "a603d94f1c32d47fa79deb852e16db51caff70de",
+  "license": "Apache-2.0",
+  "files": [
+    {
+      "file": "config.json",
+      "bytes": 1124,
+      "sha256": "2b4dac59ccd8e85b37ec1d5186173c0525607ad15b477eaf7cecd5bcc77b71d6"
+    },
+    {
+      "file": "dialect_model.pt",
+      "bytes": 23976911,
+      "sha256": "2740d8c7479895cbf84dde194933014b282db37a38f4b8d032a08b47edb1ea13"
+    },
+    {
+      "file": "tokenizer.json",
+      "bytes": 3025024,
+      "sha256": "3932b7134100e8cea4e8d82d0d682ca715f5f05d2216919f01c0db6871e9966a"
+    },
+    {
+      "file": "labels.json",
+      "bytes": 97,
+      "sha256": "5c07759a7e175a52e4be1c26974fea70329f636e011a966dfea38753fd909100"
+    },
+    {
+      "file": "README.md",
+      "bytes": 7140,
+      "sha256": "a3e6b68f6bd60e23d6cad8e7f416dff855800014f6ce69dc57eb3cd5be4decc2"
+    }
+  ]
+}

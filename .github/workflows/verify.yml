@@ -1,4 +1,4 @@
-name: Verify Phase 1
+name: Verify BabelTalk
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
@@ -15,5 +15,6 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint -- --max-warnings=0
       - run: npm test
+      - run: python3 scripts/check_sqlite.py
       - run: mkdir -p qa && npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output qa/android.bundle
       - run: npx react-native bundle --platform ios --dev false --entry-file index.js --bundle-output qa/ios.bundle

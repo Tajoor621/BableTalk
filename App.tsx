@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Share,
   StatusBar,
   StyleSheet,
   Switch,
@@ -113,6 +112,7 @@ function BabelTalk() {
   const [probability, setProbability] = useState(0);
   const [route, setRoute] = useState<Route>('headphones');
   const [mms, setMms] = useState(false);
+  const [useDialect, setUseDialect] = useState(false);
   const [voices, setVoices] = useState<Voice[]>([]);
   const [editing, setEditing] = useState<string>();
   const [draft, setDraft] = useState('');
@@ -204,7 +204,7 @@ function BabelTalk() {
     await action(async () => {
       setWork('preparing');
       await verifyModels('multilingual');
-      const value = await engine.start(a, b);
+      const value = await engine.start(a, b, { dialect: useDialect });
       setSession(value);
       setRows([]);
       setEditing(undefined);
@@ -352,10 +352,10 @@ function BabelTalk() {
       const values = await sessions.read(value.id);
       const content = exportSession(value, values, format);
       // The operating-system share sheet is shown only after an explicit export tap.
-      await Share.share({
-        title: `BabelTalk ${format.toUpperCase()}`,
-        message: content,
-      });
+      await requireLocal().exportTranscript(
+        content,
+        format === 'json' ? 'json' : 'txt',
+      );
     });
   }
   function confirmDownload(includeMms = false) {
@@ -818,6 +818,21 @@ function BabelTalk() {
             ))}
           </View>
           <View style={styles.card}>
+            <Text style={styles.label}>Arabic dialect candidate</Text>
+            <Text style={styles.note}>
+              Uses a build-generated Nawah ONNX pack, when included. At least 25
+              words of the same speaker’s Arabic are needed; uncertain results
+              receive no label. Missing packs never block translation.
+            </Text>
+            <View style={styles.switchRow}>
+              <Text style={styles.note}>Enable for the next session</Text>
+              <Switch
+                accessibilityLabel="Enable Arabic dialect classifier"
+                value={useDialect}
+                disabled={busyUi || !!session}
+                onValueChange={setUseDialect}
+              />
+            </View>
             <Text style={styles.label}>3 · Optional audio language ID</Text>
             <Text style={styles.note}>
               MMS-LID-126 is about 974 MB quantised and has high memory/latency

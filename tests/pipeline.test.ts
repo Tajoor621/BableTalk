@@ -99,3 +99,25 @@ it('releases both models when native transcription rejects', async () => {
   expect(mockVadRelease).toHaveBeenCalledTimes(1);
   expect(mockWhisperRelease).toHaveBeenCalledTimes(1);
 });
+it('cancels during model initialisation without starting the microphone or leaking contexts', async () => {
+  let releaseInit: (value: unknown) => void = () => {};
+  (initWhisper as jest.Mock).mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        releaseInit = resolve;
+      }),
+  );
+  const { pipeline } = setup();
+  const started = pipeline.start();
+  // Attach a rejection handler before advancing the delayed native initialiser.
+  // eslint-disable-next-line jest/valid-expect
+  const expected = expect(started).rejects.toThrow('cancelled');
+  await settle();
+  const stopped = pipeline.stop(false);
+  releaseInit({ transcribeData: mockTranscribe, release: mockWhisperRelease });
+  await stopped;
+  await expected;
+  expect(Capture.start).not.toHaveBeenCalled();
+  expect(mockWhisperRelease).toHaveBeenCalledTimes(1);
+  expect(mockVadRelease).toHaveBeenCalledTimes(1);
+});

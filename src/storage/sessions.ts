@@ -118,6 +118,16 @@ export class Sessions {
       );
     });
   }
+  setDialect(id: string, speaker: Speaker, label: string) {
+    return this.serial(async db => {
+      const column =
+        speaker === 'A' ? 'detected_dialect_a' : 'detected_dialect_b';
+      await db.execute(`UPDATE sessions SET ${column}=? WHERE id=?`, [
+        label,
+        id,
+      ]);
+    });
+  }
   end(id: string) {
     return this.serial(async db => {
       await db.execute(

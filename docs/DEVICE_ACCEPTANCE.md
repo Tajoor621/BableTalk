@@ -40,3 +40,23 @@ establish the final <3-second end-of-speech-to-translated-audio requirement.
 
 Advance to Phase 2 only when Android and iOS Phase 1 device evidence is reviewed.
 Do not substitute guessed test results or published model benchmark numbers.
+
+## Full conversation development gate
+
+- On the installed APK/iPhone build, download speech and translation models once,
+  then repeat English↔Urdu and English↔Arabic conversations with networking off.
+- Verify both typed and spoken input; long turns must segment without dropping
+  words. Review originals and translations with independent bilingual speakers.
+- Confirm B→A headphones and A→B speaker, including headphone disconnect DURING
+  playback. Check for route leakage; a startup-only route check is insufficient.
+- Confirm Stop playback, backgrounding, incoming calls and rapid start/stop during
+  model initialisation. A cancelled start must not leave capture active.
+- Verify corrections regenerate translation; simulate missing/corrupt models,
+  unavailable voice, unsupported Pashto pair and mismatched language detection.
+- Enable Nawah and provide at least 25 words from the SAME speaker. Confirm short
+  or uncertain input has no label, and Urdu/Pashto never acquire dialect labels.
+- Kill/reopen the app during a session: saved pending/open records must survive.
+  Test actual JSON/TXT export files and deletion; inspect SQLite foreign keys.
+- Measure separately: endpoint delay, ASR queue/inference, LID, dialect, translation,
+  user review delay, TTS first audio, end-to-end delay, battery and temperature.
+  Manual review time must not be hidden inside a claimed sub-three-second result.

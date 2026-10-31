@@ -1,6 +1,9 @@
 package com.babeltalk.local
 
 import android.content.Context
+import android.content.Intent
+import androidx.core.content.FileProvider
+import java.io.File
 import android.media.AudioAttributes
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
@@ -24,6 +27,7 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
   private var tts: TextToSpeech? = null
   private var speechReady = false
   private var speechPromise: Promise? = null
+  private var activeUtterance: String? = null
   private var previousMode = AudioManager.MODE_NORMAL
   private var previousSpeaker = false
   private var routeActive = false
@@ -78,10 +82,10 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
         if (speechReady) {
           tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(id: String?) {}
-            override fun onDone(id: String?) { finishSpeech(null) }
-            @Deprecated("Legacy callback") override fun onError(id: String?) { finishSpeech("Offline voice failed") }
-            override fun onError(id: String?, errorCode: Int) { finishSpeech("Offline voice failed ($errorCode)") }
-            override fun onStop(id: String?, interrupted: Boolean) { finishSpeech("Playback stopped") }
+            override fun onDone(id: String?) { finishSpeech(null, id) }
+            @Deprecated("Legacy callback") override fun onError(id: String?) { finishSpeech("Offline voice failed", id) }
+            override fun onError(id: String?, errorCode: Int) { finishSpeech("Offline voice failed ($errorCode)", id) }
+            override fun onStop(id: String?, interrupted: Boolean) { finishSpeech("Playback stopped", id) }
           })
           promise.resolve(true)
         } else { tts?.shutdown(); tts = null; promise.reject("TTS_INIT", "No speech engine installed. Translated text remains available.") }
@@ -115,7 +119,9 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
     if (Build.VERSION.SDK_INT >= 31) audio.clearCommunicationDevice()
     audio.isSpeakerphoneOn = previousSpeaker; audio.mode = previousMode; routeActive = false
   }
-  private fun finishSpeech(error: String?) { main.post {
+  private fun finishSpeech(error: String?, id: String? = null) { main.post {
+    if (id != null && id != activeUtterance) return@post
+    activeUtterance = null
     val pending = speechPromise; speechPromise = null; privatePlayback = false; restoreRoute()
     if (error == null) pending?.resolve(true) else pending?.reject("TTS", error)
   } }
@@ -133,11 +139,27 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
         tts?.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
         privatePlayback = destination == "headphones"
         speechPromise = promise
-        if (tts?.speak(text, TextToSpeech.QUEUE_FLUSH, Bundle(), "babel-${System.nanoTime()}") != TextToSpeech.SUCCESS) finishSpeech("Speech engine rejected playback")
+        activeUtterance = "babel-${System.nanoTime()}"
+        if (tts?.speak(text, TextToSpeech.QUEUE_FLUSH, Bundle(), activeUtterance) != TextToSpeech.SUCCESS) finishSpeech("Speech engine rejected playback")
       } catch (e: Exception) { restoreRoute(); promise.reject("AUDIO_ROUTE", e) }
     }
   }
   @ReactMethod fun stopSpeech(promise: Promise) { main.post { tts?.stop(); finishSpeech("Playback stopped"); promise.resolve(true) } }
+  @ReactMethod fun exportTranscript(content: String, format: String, promise: Promise) {
+    main.post {
+      try {
+        require(format in setOf("json", "txt")) { "Unsupported export format" }
+        val activity = app.currentActivity ?: throw IllegalStateException("Open BabelTalk to export")
+        val directory = File(app.cacheDir, "exports"); directory.mkdirs()
+        directory.listFiles()?.filter { System.currentTimeMillis() - it.lastModified() > 86400000 }?.forEach { it.delete() }
+        val file = File(directory, "BabelTalk-${System.currentTimeMillis()}.$format"); file.writeText(content, Charsets.UTF_8)
+        val uri = FileProvider.getUriForFile(app, "${app.packageName}.exports", file)
+        val intent = Intent(Intent.ACTION_SEND).setType(if (format == "json") "application/json" else "text/plain")
+          .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        activity.startActivity(Intent.createChooser(intent, "Export BabelTalk session")); promise.resolve(true)
+      } catch (e: Exception) { promise.reject("EXPORT", e) }
+    }
+  }
   override fun invalidate() {
     audio.unregisterAudioDeviceCallback(deviceCallback)
     main.post { tts?.stop(); finishSpeech("App closed"); tts?.shutdown(); tts = null; translators.values.forEach { it.close() }; translators.clear() }

@@ -2,6 +2,7 @@ import { NativeModules } from 'react-native';
 export type Route = 'headphones' | 'speaker';
 export type Voice = { language: string; name: string };
 export interface LocalApi {
+  exportTranscript(content: string, format: 'json' | 'txt'): Promise<boolean>;
   preparePair(a: string, b: string): Promise<boolean>;
   pairReady(a: string, b: string): Promise<boolean>;
   translate(text: string, a: string, b: string): Promise<string>;

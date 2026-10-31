@@ -1,33 +1,42 @@
-# Validation — 31 October 2026
+# BabelTalk development verification — 31 October 2026
 
-This source delivery is Phase 1. It has not been certified production-ready.
+The application now implements an offline mobile conversation workflow beyond
+the original English-only foundation. The earlier physical-device gate has not
+been passed; these integrations are for development qualification.
 
-Executed in a Linux development environment:
+Executed locally:
 
-- TypeScript strict project checking.
-- Jest: 16 passing tests across five suites. PCM decoding at split byte boundaries, short/no-speech rejection,
-  pre-roll/endpoint trimming, final-turn flushing, 12-second segmentation,
-  model integrity rejection, Silero context/recurrent tensor protocol, native
-  initialisation failure cleanup, capture overflow and ASR failure cleanup,
-  idempotent shutdown, and UI capability labelling. Native bindings are mocked
-  in Jest; those tests validate orchestration rather than native audio/inference.
-- ESLint with zero warnings allowed.
-- Metro production JavaScript bundle generation for Android and iOS.
-- Download and SHA-256/size verification of both locked model weights.
-- Real Silero v5.1.2 ONNX desktop CPU inference using the upstream whisper.cpp
-  `samples/jfk.wav` (16 kHz mono PCM16). 344 frames; 208 above probability 0.6;
-  peak 0.9976. This confirms the input/state protocol can detect speech on a
-  known fixture, not conversational WER, routing, or robustness.
+- TypeScript and zero-warning lint; 38 Jest tests covering PCM, VAD context,
+  capture cancellation during startup, cleanup, language mappings, ambiguity,
+  two-way translation direction, private-output failure, transcript retention,
+  user corrections, queue finalisation, Arabic-only dialect eligibility, JSON
+  export, and byte-level tokenisation.
+- Actual SQLite schema, parameterised Unicode round-trip, foreign-key enforcement
+  and cascading deletion through Python SQLite (not a mocked database).
+- Actual Nawah PyTorch→ONNX export with fixed weights, mean pooling, source hash
+  checks, and numerical logit parity on multiple sequence lengths. Mobile byte-BPE
+  token IDs match the reference tokenizer on Arabic, diacritics and mixed text.
+- Earlier actual Silero ONNX desktop inference on the whisper.cpp JFK fixture:
+  344 frames; 208 above 0.6; peak 0.9976. This is a protocol smoke check only.
 
-Not executed here:
+Jest native bindings are mocked. Those tests establish orchestration, not physical
+microphone behaviour or an independent linguistic accuracy score. Source CI omits
+the full generated model pack; its full-tokenizer parity test runs in native CI
+with the generated pack present.
 
-- Gradle/CMake Android native build: no Android SDK/NDK/device in the environment.
-- Xcode/CocoaPods iOS native build: no macOS/Xcode/device in the environment.
-- Native mobile ONNX and Whisper execution, physical microphone/headset routing,
-  interruption recovery, speech accuracy, sustained latency, one-hour battery,
-  thermal behaviour or assistive-technology acceptance.
-- Translation, LID, dialect classification, TTS, SQLite or exports: future phases.
+Native GitHub builds are required. The first builds identified and fixed SDK
+setup, iOS minimum target, Gradle API compatibility and a native ML Kit selector
+issue. Check the current commit's Actions results rather than treating an earlier
+successful source job as a native build qualification.
 
-CI in `.github/workflows/verify.yml` repeats source checks and both JavaScript
-bundles when the project is placed in a repository. It does not imply a native
-build or a real-device test has passed.
+ONNX model-export telemetry was blocked by automatic review. The safer rerun set
+the documented process-lifetime telemetry opt-out before runtime initialisation
+and passed. Both mobile runtimes also disable ONNX telemetry before creating the
+inference environment. This does not substitute for device network verification.
+
+Still unverified: physical Android/iPhone audio, route changes, system voice
+availability, real conversational WER/translation adequacy/dialect calibration,
+p50/p95 end-of-speech latency, one-hour battery, low-memory behaviour, accessibility
+with assistive technology, and real-user bilingual comprehension. Pashto
+translation is unavailable. Specialised Urdu/Arabic ASR and bundled neural TTS
+are not represented as completed integrations.

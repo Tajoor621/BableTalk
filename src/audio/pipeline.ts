@@ -38,64 +38,83 @@ export class Pipeline {
   private watchdog?: ReturnType<typeof setInterval>;
   private lastFrame = 0;
   private closing?: Promise<void>;
+  private initialization?: Promise<void>;
+  private stopRequested = false;
   constructor(
     private callbacks: Callbacks,
     private options: { language?: Language; useMms?: boolean } = {},
   ) {}
-  async start() {
-    try {
-      setCaptureActive(true);
-      const paths = await verifyModels(
-        this.options.language ? 'multilingual' : 'english',
-      );
-      if (this.options.useMms) {
-        this.lid = await MmsLid.create();
-      }
-      this.vad = await Silero.create(paths.vad);
-      this.whisper = await initWhisper({
-        filePath: paths.whisper,
-        useGpu: false,
-      });
-      LiveAudioStream.init({
-        sampleRate: 16000,
-        channels: 1,
-        bitsPerSample: 16,
-        audioSource: 6,
-        bufferSize: 2048,
-      });
-      this.accepting = true;
-      this.lastFrame = Date.now();
-      this.watchdog = setInterval(() => {
-        if (Date.now() - this.lastFrame > 5000) {
-          this.fail(
-            new Error(
-              'Microphone stopped delivering audio. Check interruptions, permissions and input route.',
-            ),
-          );
-        }
-      }, 1000);
-      this.subscription = LiveAudioStream.on('data', (base64: string) => {
-        if (!this.accepting) {
-          return;
-        }
-        this.lastFrame = Date.now();
-        try {
-          this.frames.push(...this.framer.push(Buffer.from(base64, 'base64')));
-          if (this.frames.length > 64) {
-            throw new Error(
-              'VAD cannot keep up. Session stopped; no audio silently discarded.',
-            );
-          }
-          this.runVad();
-        } catch (e) {
-          this.fail(e);
-        }
-      });
-      LiveAudioStream.start();
-    } catch (e) {
+  start(): Promise<void> {
+    if (this.stopRequested) {
+      return Promise.reject(new Error('Recording was cancelled'));
+    }
+    if (!this.initialization) {
+      this.initialization = this.initialize();
+    }
+    return this.initialization.catch(async e => {
       await this.stop(false);
       throw e;
+    });
+  }
+  private assertOpen() {
+    if (this.stopRequested) {
+      throw new Error('Recording was cancelled before microphone start');
     }
+  }
+  private async initialize() {
+    setCaptureActive(true);
+    const paths = await verifyModels(
+      this.options.language ? 'multilingual' : 'english',
+    );
+    this.assertOpen();
+    if (this.options.useMms) {
+      this.lid = await MmsLid.create();
+    }
+    this.assertOpen();
+    this.vad = await Silero.create(paths.vad);
+    this.assertOpen();
+    this.whisper = await initWhisper({
+      filePath: paths.whisper,
+      useGpu: false,
+    });
+    this.assertOpen();
+    LiveAudioStream.init({
+      sampleRate: 16000,
+      channels: 1,
+      bitsPerSample: 16,
+      audioSource: 6,
+      bufferSize: 2048,
+    });
+    this.assertOpen();
+    this.accepting = true;
+    this.lastFrame = Date.now();
+    this.watchdog = setInterval(() => {
+      if (Date.now() - this.lastFrame > 5000) {
+        this.fail(
+          new Error(
+            'Microphone stopped delivering audio. Check interruptions, permissions and input route.',
+          ),
+        );
+      }
+    }, 1000);
+    this.subscription = LiveAudioStream.on('data', (base64: string) => {
+      if (!this.accepting) {
+        return;
+      }
+      this.lastFrame = Date.now();
+      try {
+        this.frames.push(...this.framer.push(Buffer.from(base64, 'base64')));
+        if (this.frames.length > 64) {
+          throw new Error(
+            'VAD cannot keep up. Session stopped; no audio silently discarded.',
+          );
+        }
+        this.runVad();
+      } catch (e) {
+        this.fail(e);
+      }
+    });
+    LiveAudioStream.start();
   }
   private fail(error: unknown) {
     if (this.failed) {
@@ -181,8 +200,16 @@ export class Pipeline {
     }
   }
   stop(flush = true): Promise<void> {
+    this.stopRequested = true;
+    this.accepting = false;
+    if (this.subscription) {
+      LiveAudioStream.stop();
+    }
     if (!this.closing) {
-      this.closing = this.close(flush);
+      this.closing = (async () => {
+        await this.initialization?.catch(() => {});
+        await this.close(flush);
+      })();
     }
     return this.closing;
   }

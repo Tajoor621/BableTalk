@@ -22,6 +22,7 @@ require a connection; conversation inference runs locally once prepared.
   explicit Wi-Fi translation downloads; installed voice listing; actionable errors.
 - Optional MMS-LID-126 audio classifier with top-k predictions and conservative
   ambiguity handling. Manual per-speaker language selection works without it.
+- Optional Arabic dialect candidates using a build-generated Nawah ONNX pack, a verified byte-level BPE tokenizer and accumulated same-speaker context.
 - Source CI plus native Android/iOS build workflows. See Actions for actual build
   results; neither JavaScript bundles nor mocked tests certify phone behaviour.
 
@@ -46,13 +47,13 @@ every phone turn would undermine latency and memory limits. Its licence is
 CC-BY-NC-4.0; review that restriction before enabling or distributing it.
 
 Urdu, Pashto and English have no dialect classifier here. Arabic dialect labels
-need a separately qualified Nawah pack and sufficient context; its model card
+use a build-generated Nawah pack and need sufficient context; its model card
 warns about inputs shorter than approximately 25 words. Dialect→MSA is not a
 lookup-table substitution. This app preserves original text rather than
 inventing an MSA paraphrase. On-device baseline translation may struggle with
 colloquial Arabic; request a rephrase in MSA or correct the recognised words.
 
-Specialised Urdu/Arabic Whisper checkpoints and MOSS/Kitten voices remain
+Nawah is optional and its mobile accuracy remains unqualified. Specialised Urdu/Arabic Whisper checkpoints and MOSS/Kitten voices remain
 qualification work. The running baseline uses multilingual Whisper and available
 system voices. It does not claim those specialised models are integrated.
 
@@ -129,6 +130,30 @@ MMS is already converted to ONNX by the pinned Xenova pack; Silero is already
 ONNX, and Whisper is already GGML quantised. No conversion is needed for those
 locked files. The original English-only Phase 1 model remains supported by the
 pipeline default and developer model installer.
+
+## Arabic dialect model preparation
+
+Native CI generates and bundles the pinned Apache-2.0 Nawah model automatically.
+It does not execute the model repository's Python code. Locally, before a native
+build, generate the same pack with:
+
+```sh
+python3 -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+python3 -m pip install transformers==4.49.0 onnx==1.17.0 onnxruntime==1.24.3
+python3 scripts/export_nawah.py
+npm test -- bpe
+```
+
+The script verifies source hashes, reconstructs the mean-pooling classifier,
+checks ONNX/PyTorch logits and emits generated-assets/nawah. The mobile tokenizer
+is tested against reference token IDs. Model weights stay out of git. Enable
+Arabic dialect candidates in Models; a missing or corrupt pack shows a warning
+and leaves translation available. Labels require at least 25 same-speaker words,
+a model score ≥0.8 and a top-two margin ≥0.2. These thresholds are provisional,
+not independently calibrated accuracy. No Urdu/Pashto dialect labels are produced.
+
+ONNX telemetry is disabled at process startup and before native environment
+creation; Python conversion also opts out before runtime import.
 
 ## Storage and privacy
 

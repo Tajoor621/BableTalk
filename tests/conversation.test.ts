@@ -27,6 +27,7 @@ function fixture() {
     end: jest.fn(async () => {}),
   };
   const api = {
+    exportTranscript: jest.fn(async () => true),
     pairReady: jest.fn(async () => true),
     translate: jest.fn(async (text, a, b) => `${a}:${text}:${b}`),
     setSessionActive: jest.fn(async () => true),
@@ -155,4 +156,50 @@ it('exports both texts as valid JSON without changing script or quotes', () => {
   const result = JSON.parse(exportSession(session, [row], 'json'));
   expect(result.utterances[0].original_text).toBe(row.original_text);
   expect(exportSession(session, [row], 'text')).toContain(row.original_text);
+});
+it('only assigns Arabic dialect candidates after enough same-speaker context', async () => {
+  const { db, api } = fixture();
+  const setDialect = jest.fn(async () => {});
+  Object.assign(db, { setDialect });
+  const model = {
+    classify: jest.fn(async () => ({
+      label: 'Egyptian',
+      warning: 'Candidate only',
+    })),
+    release: jest.fn(async () => {}),
+  };
+  const factory = jest.fn(async () => model);
+  const engine = new Conversation(
+    db as unknown as Sessions,
+    () => api as LocalApi,
+    factory,
+  );
+  await engine.start('eng', 'ara', { dialect: true });
+  const short = await engine.receive('B', 'مرحبا كيف حالك');
+  expect(short.detected_dialect).toBeNull();
+  expect(factory).not.toHaveBeenCalled();
+  const long = await engine.receive('B', 'كلمة '.repeat(30));
+  expect(long.detected_dialect).toBe('Egyptian');
+  expect(setDialect).toHaveBeenCalledWith('s', 'B', 'Egyptian');
+  await engine.end();
+  expect(model.release).toHaveBeenCalledTimes(1);
+});
+it('does not create dialect labels for Urdu even when dialect mode is enabled', async () => {
+  const { db, api } = fixture();
+  const factory = jest.fn();
+  const engine = new Conversation(
+    db as unknown as Sessions,
+    () => api as LocalApi,
+    factory,
+  );
+  await engine.start('eng', 'urd', { dialect: true });
+  const row = await engine.receive('B', 'الفاظ '.repeat(30));
+  expect(row.detected_dialect).toBeNull();
+  expect(factory).not.toHaveBeenCalled();
+});
+it('prevents simultaneous session starts', async () => {
+  const { engine } = fixture();
+  const first = engine.start('eng', 'urd');
+  await expect(engine.start('eng', 'ara')).rejects.toThrow('End');
+  await first;
 });

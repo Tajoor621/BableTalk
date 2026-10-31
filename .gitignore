@@ -78,3 +78,5 @@ yarn-error.log
 /models/
 *.part
 qa/
+
+/generated-assets/

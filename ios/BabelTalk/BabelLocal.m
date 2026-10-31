@@ -1,4 +1,6 @@
 #import <React/RCTBridgeModule.h>
+#import <React/RCTUtils.h>
+#import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import <MLKitTranslate/MLKitTranslate.h>
 #import <MLKitCommon/MLKitCommon.h>
@@ -6,6 +8,7 @@
 @interface BabelLocal : NSObject <RCTBridgeModule, AVSpeechSynthesizerDelegate>
 @property(nonatomic,strong) NSMutableDictionary<NSString *, MLKTranslator *> *translators;
 @property(nonatomic,strong) AVSpeechSynthesizer *speech;
+@property(nonatomic,strong) AVSpeechUtterance *activeUtterance;
 @property(nonatomic,copy) RCTPromiseResolveBlock pendingResolve;
 @property(nonatomic,copy) RCTPromiseRejectBlock pendingReject;
 @property(nonatomic,assign) BOOL sessionActive;
@@ -24,7 +27,7 @@ RCT_EXPORT_MODULE();
   NSString *key = [NSString stringWithFormat:@"%@:%@", a, b];
   if (!self.translators[key]) {
     MLKTranslatorOptions *options = [[MLKTranslatorOptions alloc] initWithSourceLanguage:a targetLanguage:b];
-    self.translators[key] = [MLKTranslator translatorwithOptions:options];
+    self.translators[key] = [MLKTranslator translatorWithOptions:options];
   }
   return self.translators[key];
 }
@@ -80,7 +83,7 @@ RCT_EXPORT_METHOD(offlineVoices:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
 - (void)finish:(NSString *)error {
   RCTPromiseResolveBlock resolve = self.pendingResolve;
   RCTPromiseRejectBlock reject = self.pendingReject;
-  self.pendingResolve = nil; self.pendingReject = nil; self.privatePlayback = NO;
+  self.pendingResolve = nil; self.pendingReject = nil; self.privatePlayback = NO; self.activeUtterance = nil;
   [self restoreRoute];
   if (error) { if (reject) reject(@"TTS", error, nil); } else if (resolve) resolve(@YES);
 }
@@ -107,12 +110,27 @@ RCT_EXPORT_METHOD(speak:(NSString *)text language:(NSString *)lang destination:(
   if (error) { [self restoreRoute]; reject(@"AUDIO_ROUTE", error.localizedDescription, error); return; }
   AVSpeechUtterance *utterance = [[AVSpeechUtterance alloc] initWithString:text]; utterance.voice = selected; utterance.rate = AVSpeechUtteranceDefaultSpeechRate;
   self.privatePlayback = [destination isEqualToString:@"headphones"]; self.pendingResolve = resolve; self.pendingReject = reject;
-  [self.speech speakUtterance:utterance];
+  self.activeUtterance = utterance; [self.speech speakUtterance:utterance];
 }
 RCT_EXPORT_METHOD(stopSpeech:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
   [self.speech stopSpeakingAtBoundary:AVSpeechBoundaryImmediate]; [self finish:@"Playback stopped"]; resolve(@YES);
 }
-- (void)speechSynthesizer:(AVSpeechSynthesizer *)synth didFinishSpeechUtterance:(AVSpeechUtterance *)utterance { [self finish:nil]; }
-- (void)speechSynthesizer:(AVSpeechSynthesizer *)synth didCancelSpeechUtterance:(AVSpeechUtterance *)utterance { [self finish:@"Playback stopped"]; }
+- (void)speechSynthesizer:(AVSpeechSynthesizer *)synth didFinishSpeechUtterance:(AVSpeechUtterance *)utterance { if (utterance == self.activeUtterance) [self finish:nil]; }
+- (void)speechSynthesizer:(AVSpeechSynthesizer *)synth didCancelSpeechUtterance:(AVSpeechUtterance *)utterance { if (utterance == self.activeUtterance) [self finish:@"Playback stopped"]; }
+RCT_EXPORT_METHOD(exportTranscript:(NSString *)content format:(NSString *)format resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+  if (![@[@"json",@"txt"] containsObject:format]) { reject(@"EXPORT", @"Unsupported export format", nil); return; }
+  UIViewController *presenter = RCTPresentedViewController();
+  if (!presenter) { reject(@"EXPORT", @"Open BabelTalk to export", nil); return; }
+  NSURL *url = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"BabelTalk-%@.%@", NSUUID.UUID.UUIDString, format]]];
+  NSError *error = nil;
+  if (![content writeToURL:url atomically:YES encoding:NSUTF8StringEncoding error:&error]) { reject(@"EXPORT", error.localizedDescription, error); return; }
+  UIActivityViewController *sheet = [[UIActivityViewController alloc] initWithActivityItems:@[url] applicationActivities:nil];
+  if (sheet.popoverPresentationController) { sheet.popoverPresentationController.sourceView = presenter.view; sheet.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMidX(presenter.view.bounds),CGRectGetMidY(presenter.view.bounds),1,1); }
+  sheet.completionWithItemsHandler = ^(UIActivityType type, BOOL completed, NSArray *items, NSError *failure) {
+    [[NSFileManager defaultManager] removeItemAtURL:url error:nil];
+    if (failure) reject(@"EXPORT", failure.localizedDescription, failure); else resolve(@(completed));
+  };
+  [presenter presentViewController:sheet animated:YES completion:nil];
+}
 - (void)invalidate { [[NSNotificationCenter defaultCenter] removeObserver:self]; [self.speech stopSpeakingAtBoundary:AVSpeechBoundaryImmediate]; [self finish:@"App closed"]; [self.translators removeAllObjects]; }
 @end
