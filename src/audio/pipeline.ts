@@ -3,13 +3,18 @@ import { Buffer } from 'buffer';
 import { initWhisper, WhisperContext } from 'whisper.rn/index';
 import { Silero } from './silero';
 import { PcmFramer, Segmenter, SpeechSegment } from './segmenter';
-import { verifyModels } from '../models/store';
+import { verifyModels, setCaptureActive } from '../models/store';
+import { Language, languages } from '../linguistics/languages';
+import { MmsLid } from '../linguistics/mms';
 export type Transcript = {
   id: number;
   text: string;
   endMs: number;
   processingMs: number;
   reason: string;
+  detectedLanguage?: Language;
+  languageMethod?: 'selected' | 'mms';
+  warning?: string;
 };
 export type Callbacks = {
   onText: (value: Transcript) => void;
@@ -18,6 +23,7 @@ export type Callbacks = {
 };
 export class Pipeline {
   private vad?: Silero;
+  private lid?: MmsLid;
   private whisper?: WhisperContext;
   private framer = new PcmFramer();
   private segmenter = new Segmenter();
@@ -32,10 +38,19 @@ export class Pipeline {
   private watchdog?: ReturnType<typeof setInterval>;
   private lastFrame = 0;
   private closing?: Promise<void>;
-  constructor(private callbacks: Callbacks) {}
+  constructor(
+    private callbacks: Callbacks,
+    private options: { language?: Language; useMms?: boolean } = {},
+  ) {}
   async start() {
     try {
-      const paths = await verifyModels();
+      setCaptureActive(true);
+      const paths = await verifyModels(
+        this.options.language ? 'multilingual' : 'english',
+      );
+      if (this.options.useMms) {
+        this.lid = await MmsLid.create();
+      }
       this.vad = await Silero.create(paths.vad);
       this.whisper = await initWhisper({
         filePath: paths.whisper,
@@ -133,9 +148,21 @@ export class Pipeline {
     while (this.speech.length && !this.failed) {
       const { segment, at } = this.speech.shift()!;
       // Whisper expects float32 PCM, NOT raw PCM16. Frames have already been normalised.
+      let detectedLanguage: Language | undefined;
+      let warning = '';
+      if (this.lid) {
+        const result = await this.lid.identify(segment.samples);
+        detectedLanguage = result.language;
+        if (!detectedLanguage) {
+          warning =
+            'Audio language identification is uncertain. Confirm the selected language.';
+        }
+      }
+      const selected = this.options.language || 'eng';
+      const route = detectedLanguage || selected;
       const task = this.whisper!.transcribeData(
         segment.samples.buffer as ArrayBuffer,
-        { language: 'en', translate: false, maxThreads: 2 },
+        { language: languages[route].tag, translate: false, maxThreads: 2 },
       );
       const result = await task.promise;
       const text = result.result.trim();
@@ -146,6 +173,9 @@ export class Pipeline {
           endMs: segment.endSample / 16,
           processingMs: Date.now() - at,
           reason: segment.reason,
+          detectedLanguage,
+          languageMethod: detectedLanguage ? 'mms' : 'selected',
+          warning,
         });
       }
     }
@@ -187,12 +217,22 @@ export class Pipeline {
       this.speech = [];
       const whisper = this.whisper;
       this.whisper = undefined;
+      const lid = this.lid;
+      this.lid = undefined;
       const vad = this.vad;
       this.vad = undefined;
       try {
         await whisper?.release();
       } finally {
-        await vad?.release();
+        try {
+          await vad?.release();
+        } finally {
+          try {
+            await lid?.release();
+          } finally {
+            setCaptureActive(false);
+          }
+        }
       }
     }
   }

@@ -24,8 +24,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['download', 'verify', 'install-android'])
     parser.add_argument('--serial', help='ADB device serial')
+    parser.add_argument('--mms',action='store_true',help='Include optional 974 MB non-commercial MMS language ID model')
     args = parser.parse_args()
     models = json.loads(LOCK.read_text())['models']
+    if args.mms:
+        models += json.loads((ROOT/'optional-models.lock.json').read_text())['models']
     MODELS.mkdir(exist_ok=True)
     for model in models:
         path = MODELS / model['file']

@@ -20,7 +20,9 @@ jest.mock('../src/audio/capture', () => ({
     }),
   },
 }));
+jest.mock('../src/linguistics/mms', () => ({ MmsLid: { create: jest.fn() } }));
 jest.mock('../src/models/store', () => ({
+  setCaptureActive: jest.fn(),
   verifyModels: jest.fn(async () => ({ vad: 'v', whisper: 'w' })),
 }));
 jest.mock('../src/audio/silero', () => ({ Silero: { create: jest.fn() } }));

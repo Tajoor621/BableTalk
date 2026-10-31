@@ -19,6 +19,7 @@ if linkage != nil
 end
 
 target 'BabelTalk' do
+  pod 'GoogleMLKit/Translate', '8.0.0'
   config = use_native_modules!
 
   use_react_native!(

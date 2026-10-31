@@ -11,6 +11,8 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		BA6210010000000000000001 /* BabelLocal.m in Sources */ = {isa = PBXBuildFile; fileRef = BA6210010000000000000002; };
+		BA6210010000000000000003 /* BabelStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = BA6210010000000000000004; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +26,8 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = BabelTalk/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = BabelTalk/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		BA6210010000000000000002 /* BabelLocal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BabelLocal.m; path = BabelTalk/BabelLocal.m; sourceTree = "<group>"; };
+		BA6210010000000000000004 /* BabelStorage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BabelStorage.m; path = BabelTalk/BabelStorage.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +46,8 @@
 			isa = PBXGroup;
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				BA6210010000000000000002 /* BabelLocal.m */,
+				BA6210010000000000000004 /* BabelStorage.m */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
@@ -245,6 +251,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				BA6210010000000000000001 /* BabelLocal.m in Sources */,
+				BA6210010000000000000003 /* BabelStorage.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,6 +278,7 @@
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
+					"-lsqlite3",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.babeltalk;
 				PRODUCT_NAME = BabelTalk;
@@ -299,6 +308,7 @@
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
+					"-lsqlite3",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.babeltalk;
 				PRODUCT_NAME = BabelTalk;

@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "models": [
+    {
+      "file": "mms-lid-126.onnx",
+      "url": "https://huggingface.co/Xenova/mms-lid-126/resolve/0a867d6b271b76c068b2ce43f7ecebb76c58205d/onnx/model_quantized.onnx",
+      "sha256": "91518d5d1d91b224e21a16b55692d1cec28b18d2c0956f3031ff2dc1be42a03c",
+      "bytes": 973919443,
+      "license": "CC-BY-NC-4.0",
+      "group": "mms"
+    }
+  ]
+}
