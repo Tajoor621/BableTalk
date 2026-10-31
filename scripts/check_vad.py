@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Run the real locked Silero model on a 16 kHz mono PCM16 WAV; development QA only."""
+import os
+os.environ['ORT_DISABLE_TELEMETRY'] = '1'
+os.environ['HF_HUB_DISABLE_TELEMETRY'] = '1'
 import argparse
 from pathlib import Path
 import wave
 import numpy as np
 import onnxruntime as ort
+ort.disable_telemetry_events()
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('wav', type=Path)

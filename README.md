@@ -60,7 +60,7 @@ system voices. It does not claim those specialised models are integrated.
 
 Requirements: Node 22.11+, npm, Python 3.10+, and appropriate native tooling.
 Android uses JDK 17, SDK/build tools 36, NDK 27.1.12297006 and CMake 3.22.1.
-iOS requires macOS, compatible Xcode and CocoaPods. Native identifiers are
+iOS requires macOS, compatible Xcode, CocoaPods and iOS 16+ (mobile ML runtime requirements). Native identifiers are
 `com.babeltalk`; repository spelling is intentionally `BableTalk`.
 
 ```sh

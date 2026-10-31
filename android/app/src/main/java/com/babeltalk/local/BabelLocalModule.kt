@@ -2,6 +2,7 @@ package com.babeltalk.local
 
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
@@ -27,6 +28,13 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
   private var previousSpeaker = false
   private var routeActive = false
   private var sessionActive = false
+  private var privatePlayback = false
+  private val deviceCallback = object : AudioDeviceCallback() {
+    override fun onAudioDevicesRemoved(devices: Array<out AudioDeviceInfo>) {
+      if (privatePlayback && speechPromise != null) { tts?.stop(); finishSpeech("Headphone output changed. Playback stopped to protect privacy.") }
+    }
+  }
+  init { audio.registerAudioDeviceCallback(deviceCallback, main) }
   private val translators = mutableMapOf<String, Translator>()
   override fun getName() = "BabelLocal"
   private fun valid(code: String) = code in setOf("en", "ur", "ar")
@@ -108,7 +116,7 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
     audio.isSpeakerphoneOn = previousSpeaker; audio.mode = previousMode; routeActive = false
   }
   private fun finishSpeech(error: String?) { main.post {
-    val pending = speechPromise; speechPromise = null; restoreRoute()
+    val pending = speechPromise; speechPromise = null; privatePlayback = false; restoreRoute()
     if (error == null) pending?.resolve(true) else pending?.reject("TTS", error)
   } }
   @ReactMethod fun speak(text: String, lang: String, destination: String, promise: Promise) {
@@ -123,6 +131,7 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
         route(destination)
         tts?.voice = voice
         tts?.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+        privatePlayback = destination == "headphones"
         speechPromise = promise
         if (tts?.speak(text, TextToSpeech.QUEUE_FLUSH, Bundle(), "babel-${System.nanoTime()}") != TextToSpeech.SUCCESS) finishSpeech("Speech engine rejected playback")
       } catch (e: Exception) { restoreRoute(); promise.reject("AUDIO_ROUTE", e) }
@@ -130,6 +139,7 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
   }
   @ReactMethod fun stopSpeech(promise: Promise) { main.post { tts?.stop(); finishSpeech("Playback stopped"); promise.resolve(true) } }
   override fun invalidate() {
+    audio.unregisterAudioDeviceCallback(deviceCallback)
     main.post { tts?.stop(); finishSpeech("App closed"); tts?.shutdown(); tts = null; translators.values.forEach { it.close() }; translators.clear() }
     super.invalidate()
   }

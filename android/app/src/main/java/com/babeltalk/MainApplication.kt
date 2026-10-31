@@ -23,6 +23,7 @@ class MainApplication : Application(), ReactApplication {
   }
 
   override fun onCreate() {
+    android.system.Os.setenv("ORT_DISABLE_TELEMETRY", "1", true)
     super.onCreate()
     loadReactNative(this)
   }

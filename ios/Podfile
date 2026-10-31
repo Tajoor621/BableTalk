@@ -9,7 +9,7 @@ require Pod::Executable.execute_command('node', ['-p',
   'require.resolve("react-native-permissions/scripts/setup.rb", {paths: [process.argv[1]]})', __dir__]).strip
 setup_permissions(['Microphone'])
 
-platform :ios, min_ios_version_supported
+platform :ios, '16.0'
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
@@ -20,6 +20,7 @@ end
 
 target 'BabelTalk' do
   pod 'GoogleMLKit/Translate', '8.0.0'
+  pod 'onnxruntime-c', '1.24.3'
   config = use_native_modules!
 
   use_react_native!(

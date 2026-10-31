@@ -9,6 +9,7 @@
 @property(nonatomic,copy) RCTPromiseResolveBlock pendingResolve;
 @property(nonatomic,copy) RCTPromiseRejectBlock pendingReject;
 @property(nonatomic,assign) BOOL sessionActive;
+@property(nonatomic,assign) BOOL privatePlayback;
 @property(nonatomic,copy) NSString *previousCategory;
 @property(nonatomic,copy) NSString *previousMode;
 @property(nonatomic,assign) AVAudioSessionCategoryOptions previousOptions;
@@ -17,7 +18,7 @@
 RCT_EXPORT_MODULE();
 + (BOOL)requiresMainQueueSetup { return YES; }
 - (dispatch_queue_t)methodQueue { return dispatch_get_main_queue(); }
-- (instancetype)init { if (self = [super init]) { _translators = [NSMutableDictionary new]; } return self; }
+- (instancetype)init { if (self = [super init]) { _translators = [NSMutableDictionary new]; [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(routeChanged:) name:AVAudioSessionRouteChangeNotification object:nil]; } return self; }
 - (BOOL)valid:(NSString *)code { return [@[@"en", @"ur", @"ar"] containsObject:code]; }
 - (MLKTranslator *)translator:(NSString *)a target:(NSString *)b {
   NSString *key = [NSString stringWithFormat:@"%@:%@", a, b];
@@ -61,6 +62,14 @@ RCT_EXPORT_METHOD(offlineVoices:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
   }
   resolve(voices);
 }
+- (void)routeChanged:(NSNotification *)note {
+  if (!self.privatePlayback || !self.pendingResolve) return;
+  BOOL privateOutput = NO;
+  for (AVAudioSessionPortDescription *port in AVAudioSession.sharedInstance.currentRoute.outputs) {
+    if ([@[AVAudioSessionPortHeadphones,AVAudioSessionPortBluetoothA2DP,AVAudioSessionPortBluetoothHFP,AVAudioSessionPortBluetoothLE,AVAudioSessionPortUSBAudio] containsObject:port.portType]) privateOutput = YES;
+  }
+  if (!privateOutput) { [self.speech stopSpeakingAtBoundary:AVSpeechBoundaryImmediate]; [self finish:@"Headphone output changed. Playback stopped to protect privacy."]; }
+}
 - (void)restoreRoute {
   if (!self.previousCategory) return;
   AVAudioSession *audio = AVAudioSession.sharedInstance;
@@ -71,7 +80,7 @@ RCT_EXPORT_METHOD(offlineVoices:(RCTPromiseResolveBlock)resolve rejecter:(RCTPro
 - (void)finish:(NSString *)error {
   RCTPromiseResolveBlock resolve = self.pendingResolve;
   RCTPromiseRejectBlock reject = self.pendingReject;
-  self.pendingResolve = nil; self.pendingReject = nil;
+  self.pendingResolve = nil; self.pendingReject = nil; self.privatePlayback = NO;
   [self restoreRoute];
   if (error) { if (reject) reject(@"TTS", error, nil); } else if (resolve) resolve(@YES);
 }
@@ -97,7 +106,7 @@ RCT_EXPORT_METHOD(speak:(NSString *)text language:(NSString *)lang destination:(
   }
   if (error) { [self restoreRoute]; reject(@"AUDIO_ROUTE", error.localizedDescription, error); return; }
   AVSpeechUtterance *utterance = [[AVSpeechUtterance alloc] initWithString:text]; utterance.voice = selected; utterance.rate = AVSpeechUtteranceDefaultSpeechRate;
-  self.pendingResolve = resolve; self.pendingReject = reject;
+  self.privatePlayback = [destination isEqualToString:@"headphones"]; self.pendingResolve = resolve; self.pendingReject = reject;
   [self.speech speakUtterance:utterance];
 }
 RCT_EXPORT_METHOD(stopSpeech:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
@@ -105,5 +114,5 @@ RCT_EXPORT_METHOD(stopSpeech:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromis
 }
 - (void)speechSynthesizer:(AVSpeechSynthesizer *)synth didFinishSpeechUtterance:(AVSpeechUtterance *)utterance { [self finish:nil]; }
 - (void)speechSynthesizer:(AVSpeechSynthesizer *)synth didCancelSpeechUtterance:(AVSpeechUtterance *)utterance { [self finish:@"Playback stopped"]; }
-- (void)invalidate { [self.speech stopSpeakingAtBoundary:AVSpeechBoundaryImmediate]; [self finish:@"App closed"]; [self.translators removeAllObjects]; }
+- (void)invalidate { [[NSNotificationCenter defaultCenter] removeObserver:self]; [self.speech stopSpeakingAtBoundary:AVSpeechBoundaryImmediate]; [self finish:@"App closed"]; [self.translators removeAllObjects]; }
 @end
