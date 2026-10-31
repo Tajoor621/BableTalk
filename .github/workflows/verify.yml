@@ -1,0 +1,19 @@
+name: Verify Phase 1
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint -- --max-warnings=0
+      - run: npm test
+      - run: mkdir -p qa && npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output qa/android.bundle
+      - run: npx react-native bundle --platform ios --dev false --entry-file index.js --bundle-output qa/ios.bundle
