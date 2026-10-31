@@ -6,6 +6,7 @@ export type SpeechSegment = {
   reason: 'silence' | 'limit' | 'stop';
 };
 export class Segmenter {
+  constructor(private minimumSpeechFrames = 8) {}
   private pre: Float32Array[] = [];
   private frames: Float32Array[] = [];
   private speechFrames = 0;
@@ -56,13 +57,13 @@ export class Segmenter {
     return this.active ? this.finish('stop') : undefined;
   }
   private finish(reason: SpeechSegment['reason']): SpeechSegment | undefined {
-    // Retain 96 ms of trailing silence. Reject impulses shorter than 256 ms.
+    // Retain 96 ms of trailing silence. Reject impulses below the configured speech duration.
     const retained = this.frames.slice(
       0,
       Math.max(1, this.frames.length - Math.max(0, this.silence - 3)),
     );
     const endSample = this.clock - Math.max(0, this.silence - 3) * FRAME;
-    const valid = this.speechFrames >= 8;
+    const valid = this.speechFrames >= this.minimumSpeechFrames;
     this.frames = [];
     this.pre = [];
     this.silence = 0;

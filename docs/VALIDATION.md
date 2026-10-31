@@ -6,8 +6,8 @@ been passed; these integrations are for development qualification.
 
 Executed locally:
 
-- TypeScript and zero-warning lint; 38 Jest tests covering PCM, VAD context,
-  capture cancellation during startup, cleanup, language mappings, ambiguity,
+- TypeScript and zero-warning lint; 39 Jest tests covering PCM, VAD context,
+  capture cancellation during startup, short-reply boundaries, cleanup, language mappings, ambiguity,
   two-way translation direction, private-output failure, transcript retention,
   user corrections, queue finalisation, Arabic-only dialect eligibility, JSON
   export, and byte-level tokenisation.

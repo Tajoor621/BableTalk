@@ -6,7 +6,7 @@ require a connection; conversation inference runs locally once prepared.
 
 ## Current implementation
 
-- 16 kHz mono PCM16 capture, Silero ONNX streaming VAD, multilingual quantised
+- 16 kHz mono PCM16 capture, Silero ONNX streaming VAD (128 ms minimum speech in conversation mode to retain short yes/no replies), multilingual quantised
   Whisper base for English/Urdu/Arabic, and experimental Pashto transcription.
 - English↔Urdu↔Arabic on-device ML Kit translation. Pashto translation is explicitly
   unavailable: an English pivot cannot create a missing Pashto model.

@@ -72,3 +72,10 @@ it('rejects non-finite probabilities and wrong frame sizes', () => {
   expect(() => vad.push(frame(), NaN)).toThrow();
   expect(() => vad.push(new Float32Array(10), 0.5)).toThrow();
 });
+it('supports short conversational yes/no turns with the conversation-specific 128 ms gate', () => {
+  const vad = new Segmenter(4);
+  for (let i = 0; i < 4; i++) {
+    vad.push(frame(), 0.9);
+  }
+  expect(vad.flush()?.samples.length).toBe(4 * FRAME);
+});

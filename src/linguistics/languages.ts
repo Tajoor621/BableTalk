@@ -61,8 +61,8 @@ export function scriptNotice(text: string, lang: Language): string | null {
   const arabic = text.match(/[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff]/g) || [];
   if (
     letters.length >= 6 &&
-    lang !== 'eng' &&
-    arabic.length / letters.length < 0.3
+    ((lang !== 'eng' && arabic.length / letters.length < 0.3) ||
+      (lang === 'eng' && arabic.length / letters.length > 0.3))
   ) {
     return 'Check the recognised script and language; this may be a mixed-language turn.';
   }

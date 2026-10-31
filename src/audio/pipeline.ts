@@ -43,7 +43,9 @@ export class Pipeline {
   constructor(
     private callbacks: Callbacks,
     private options: { language?: Language; useMms?: boolean } = {},
-  ) {}
+  ) {
+    this.segmenter = new Segmenter(options.language ? 4 : 8);
+  }
   start(): Promise<void> {
     if (this.stopRequested) {
       return Promise.reject(new Error('Recording was cancelled'));
