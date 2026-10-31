@@ -106,8 +106,10 @@ never calls a model downloader or cloud translator. SDK operational metadata
 is governed by Google's SDK terms; no transcript is passed to a network endpoint
 by BabelTalk. Verify network behaviour in device qualification.
 
-`npm ci` applies small idempotent namespace fixes to the two pinned legacy RN
-modules in `scripts/native-compat.cjs`. Review them when changing versions.
+`npm ci` applies reviewed compatibility changes in `scripts/native-compat.cjs`:
+Gradle namespaces, pinned native ONNX Runtime, telemetry opt-out, explicit phone
+input selection, exact PCM byte counts, and awaited capture shutdown. The input
+adapter is pinned; review these patches before changing dependency versions.
 
 ## Scripted model installation
 
@@ -170,8 +172,8 @@ Only an explicit Export action opens the operating-system share sheet.
 
 ## Hardware and remaining qualification
 
-One OS-selected microphone is used at a time. Two simultaneous physical phone
-and headset inputs are not assumed. Both people can use the phone microphone;
+The phone microphone is explicitly requested and checked for both turns, including while headphones are connected. Native start/stop operations are awaited. The screen is kept awake only while a session is active. Two simultaneous physical phone
+and headset inputs are not assumed. Both people use the phone microphone;
 explicit speaker ownership prevents guessing who spoke. Android 12+ selects
 communication devices; Android 7–11 supports explicit wired output in this build.
 Legacy Bluetooth routing needs further device-specific implementation. iOS uses

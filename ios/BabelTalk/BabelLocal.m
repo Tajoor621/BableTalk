@@ -31,7 +31,7 @@ RCT_EXPORT_MODULE();
   }
   return self.translators[key];
 }
-RCT_EXPORT_METHOD(setSessionActive:(BOOL)active resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) { self.sessionActive = active; resolve(@YES); }
+RCT_EXPORT_METHOD(setSessionActive:(BOOL)active resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) { self.sessionActive = active; UIApplication.sharedApplication.idleTimerDisabled = active; resolve(@YES); }
 RCT_EXPORT_METHOD(preparePair:(NSString *)a target:(NSString *)b resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
   if (self.sessionActive || ![self valid:a] || ![self valid:b] || [a isEqualToString:b]) { reject(@"PAIR", @"End the session and select a supported pair", nil); return; }
   MLKModelDownloadConditions *conditions = [[MLKModelDownloadConditions alloc] initWithAllowsCellularAccess:NO allowsBackgroundDownloading:NO];
@@ -132,5 +132,5 @@ RCT_EXPORT_METHOD(exportTranscript:(NSString *)content format:(NSString *)format
   };
   [presenter presentViewController:sheet animated:YES completion:nil];
 }
-- (void)invalidate { [[NSNotificationCenter defaultCenter] removeObserver:self]; [self.speech stopSpeakingAtBoundary:AVSpeechBoundaryImmediate]; [self finish:@"App closed"]; [self.translators removeAllObjects]; }
+- (void)invalidate { UIApplication.sharedApplication.idleTimerDisabled = NO; [[NSNotificationCenter defaultCenter] removeObserver:self]; [self.speech stopSpeakingAtBoundary:AVSpeechBoundaryImmediate]; [self finish:@"App closed"]; [self.translators removeAllObjects]; }
 @end

@@ -54,6 +54,10 @@ export class Conversation {
         throw new Error('Download this translation pair in Models first.');
       }
       await this.api().setSessionActive(true);
+      // Start the installed local voice engine early. Missing TTS must not block text.
+      await this.api()
+        .initSpeech()
+        .catch(() => false);
       try {
         this.session = await this.db.create(a, b);
         this.ending = false;

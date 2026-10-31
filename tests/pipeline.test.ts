@@ -121,3 +121,39 @@ it('cancels during model initialisation without starting the microphone or leaki
   expect(mockWhisperRelease).toHaveBeenCalledTimes(1);
   expect(mockVadRelease).toHaveBeenCalledTimes(1);
 });
+it('awaits native capture initialisation and releases an allocated recorder cancelled before start', async () => {
+  let completeInit: () => void = () => {};
+  (Capture.init as jest.Mock).mockImplementationOnce(
+    () =>
+      new Promise<void>(resolve => {
+        completeInit = resolve;
+      }),
+  );
+  const { pipeline } = setup();
+  const started = pipeline.start();
+  const caught = started.catch(e => e);
+  await settle();
+  expect(Capture.start).not.toHaveBeenCalled();
+  const stopped = pipeline.stop(false);
+  completeInit();
+  await stopped;
+  expect((await caught).message).toContain('cancelled');
+  expect(Capture.stop).toHaveBeenCalled();
+});
+it('waits for native microphone shutdown before releasing inference resources', async () => {
+  let finishStop: () => void = () => {};
+  (Capture.stop as jest.Mock).mockImplementationOnce(
+    () =>
+      new Promise<void>(resolve => {
+        finishStop = resolve;
+      }),
+  );
+  const { pipeline } = setup();
+  await pipeline.start();
+  const stopped = pipeline.stop(false);
+  await settle();
+  expect(mockWhisperRelease).not.toHaveBeenCalled();
+  finishStop();
+  await stopped;
+  expect(mockWhisperRelease).toHaveBeenCalledTimes(1);
+});

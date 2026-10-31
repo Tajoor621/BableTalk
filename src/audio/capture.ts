@@ -7,27 +7,27 @@ type PcmModule = {
     bitsPerSample: number;
     audioSource: number;
     bufferSize: number;
-  }): void;
+  }): Promise<void> | void;
   start(): void;
-  stop(): void;
+  stop(): Promise<void>;
   addListener(event: string): void;
   removeListeners(count: number): void;
 };
 const native = NativeModules.RNLiveAudioStream as PcmModule | undefined;
 export default {
-  init(options: Parameters<PcmModule['init']>[0]) {
+  async init(options: Parameters<PcmModule['init']>[0]) {
     if (!native) {
       throw new Error(
         'Native microphone module unavailable. Rebuild the native app.',
       );
     }
-    native.init(options);
+    await native.init(options);
   },
   start() {
     native!.start();
   },
-  stop() {
-    native?.stop();
+  async stop() {
+    await native?.stop();
   },
   on(_event: 'data', callback: (data: string) => void) {
     return new NativeEventEmitter(native).addListener('data', callback);

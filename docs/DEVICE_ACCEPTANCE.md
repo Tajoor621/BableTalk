@@ -60,3 +60,9 @@ Do not substitute guessed test results or published model benchmark numbers.
 - Measure separately: endpoint delay, ASR queue/inference, LID, dialect, translation,
   user review delay, TTS first audio, end-to-end delay, battery and temperature.
   Manual review time must not be hidden inside a claimed sub-three-second result.
+
+- With wired and Bluetooth headsets connected, confirm B is recorded at the PHONE
+  microphone, and A can reply into that same phone microphone. Verify a route
+  change stops or rejects capture rather than recording from the wrong input.
+- Confirm automatic screen timeout is suspended only during an active visible
+  session and restored on End Session. Manual screen locking still stops capture.

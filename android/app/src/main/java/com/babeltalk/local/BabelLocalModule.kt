@@ -9,6 +9,7 @@ import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
+import android.view.WindowManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -72,7 +73,14 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
         .addOnFailureListener { promise.reject("TRANSLATION", "Offline translation failed. Prepare the pair in Models first.", it) }
     } catch (e: Exception) { promise.reject("TRANSLATION", e) }
   }
-  @ReactMethod fun setSessionActive(active: Boolean, promise: Promise) { sessionActive = active; promise.resolve(true) }
+  @ReactMethod fun setSessionActive(active: Boolean, promise: Promise) {
+    sessionActive = active
+    main.post {
+      if (active) app.currentActivity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+      else app.currentActivity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+      promise.resolve(true)
+    }
+  }
   @ReactMethod fun initSpeech(promise: Promise) {
     main.post {
       if (speechReady) { promise.resolve(true); return@post }
@@ -162,7 +170,7 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
   }
   override fun invalidate() {
     audio.unregisterAudioDeviceCallback(deviceCallback)
-    main.post { tts?.stop(); finishSpeech("App closed"); tts?.shutdown(); tts = null; translators.values.forEach { it.close() }; translators.clear() }
+    main.post { app.currentActivity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); tts?.stop(); finishSpeech("App closed"); tts?.shutdown(); tts = null; translators.values.forEach { it.close() }; translators.clear() }
     super.invalidate()
   }
 }

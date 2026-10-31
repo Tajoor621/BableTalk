@@ -896,14 +896,15 @@ function BabelTalk() {
             access. Inference does not call a translation server. After setup,
             verify operation in airplane mode. Installed system voice
             availability varies by phone. No voice is downloaded while speaking.
-            {'\n\n'}Recording and playback never run together. Android 12+
-            supports explicit communication-device selection; older Android
-            versions support wired output. iOS uses the system audio route. Test
-            your Bluetooth/headset combination. Losing a private route must show
-            an error, never switch to speaker.{'\n\n'}If interrupted by a call
-            or backgrounding, recording stops. Saved open sessions remain
-            available for recovery/export. Ask both speakers before recording or
-            saving their words.
+            {'\n\n'}Both people speak into the phone microphone, even when
+            headphones are connected. Recording and playback never run together.
+            Android 12+ supports explicit communication-device selection; older
+            Android versions support wired output. iOS uses the system audio
+            route. Test your Bluetooth/headset combination. Losing a private
+            route must show an error, never switch to speaker.{'\n\n'}If
+            interrupted by a call or backgrounding, recording stops. Saved open
+            sessions remain available for recovery/export. Ask both speakers
+            before recording or saving their words.
           </Text>
         </ScrollView>
       )}

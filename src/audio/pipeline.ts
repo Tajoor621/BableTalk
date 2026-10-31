@@ -38,6 +38,8 @@ export class Pipeline {
   private watchdog?: ReturnType<typeof setInterval>;
   private lastFrame = 0;
   private closing?: Promise<void>;
+  private captureStop?: Promise<void>;
+  private captureInitialized = false;
   private initialization?: Promise<void>;
   private stopRequested = false;
   constructor(
@@ -80,13 +82,14 @@ export class Pipeline {
       useGpu: false,
     });
     this.assertOpen();
-    LiveAudioStream.init({
+    await LiveAudioStream.init({
       sampleRate: 16000,
       channels: 1,
       bitsPerSample: 16,
       audioSource: 6,
       bufferSize: 2048,
     });
+    this.captureInitialized = true;
     this.assertOpen();
     this.accepting = true;
     this.lastFrame = Date.now();
@@ -124,7 +127,8 @@ export class Pipeline {
     }
     this.failed = true;
     this.accepting = false;
-    LiveAudioStream.stop();
+    this.captureStop = Promise.resolve(LiveAudioStream.stop());
+    this.captureStop.catch(() => {});
     this.callbacks.onError(
       error instanceof Error ? error : new Error(String(error)),
     );
@@ -204,8 +208,9 @@ export class Pipeline {
   stop(flush = true): Promise<void> {
     this.stopRequested = true;
     this.accepting = false;
-    if (this.subscription) {
-      LiveAudioStream.stop();
+    if (this.captureInitialized && !this.captureStop) {
+      this.captureStop = Promise.resolve(LiveAudioStream.stop());
+      this.captureStop.catch(() => {});
     }
     if (!this.closing) {
       this.closing = (async () => {
@@ -221,12 +226,18 @@ export class Pipeline {
       this.watchdog = undefined;
     }
     this.accepting = false;
-    if (this.subscription) {
-      LiveAudioStream.stop();
-      this.subscription.remove();
-      this.subscription = undefined;
-    }
+    const subscription = this.subscription;
+    this.subscription = undefined;
+    const captureInitialized = this.captureInitialized;
+    this.captureInitialized = false;
     try {
+      if (subscription || captureInitialized) {
+        try {
+          await (this.captureStop || Promise.resolve(LiveAudioStream.stop()));
+        } finally {
+          subscription?.remove();
+        }
+      }
       await this.pump;
       if (flush && !this.failed && this.vad && this.whisper) {
         const tail = this.framer.flush();
