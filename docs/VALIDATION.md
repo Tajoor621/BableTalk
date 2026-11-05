@@ -1,4 +1,4 @@
-# BabelTalk development verification — 31 October 2026
+# BableTalk development verification — 31 October 2026
 
 The application now implements an offline mobile conversation workflow beyond
 the original English-only foundation. The earlier physical-device gate has not

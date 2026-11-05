@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#101c2d">
+    <meta name="format-detection" content="telephone=no">
+    <title>BableTalk — No more language barrier</title>
+    <meta name="description" content="BableTalk is a face-to-face conversation assistant for Android and iOS. Speech and translation stay on the phone after setup, with no account or API key.">
+    <meta name="application-name" content="BableTalk">
+    <link rel="canonical" href="https://tajoor621.github.io/BableTalk/">
+    <meta property="og:title" content="BableTalk — No more language barrier">
+    <meta property="og:description" content="BableTalk is a face-to-face conversation assistant for Android and iOS. Speech and translation stay on the phone after setup, with no account or API key.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tajoor621.github.io/BableTalk/">
+    <meta property="og:site_name" content="BableTalk">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:image" content="https://tajoor621.github.io/BableTalk/assets/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="BableTalk. No more language barrier. On-device conversation for Android and iOS.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="BableTalk — No more language barrier">
+    <meta name="twitter:description" content="BableTalk is a face-to-face conversation assistant for Android and iOS. Speech and translation stay on the phone after setup, with no account or API key.">
+    <meta name="twitter:image" content="https://tajoor621.github.io/BableTalk/assets/og.png">
+    <meta name="twitter:image:alt" content="BableTalk. No more language barrier. On-device conversation for Android and iOS.">
+    <link rel="icon" href="/BableTalk/assets/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/BableTalk/assets/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/BableTalk/assets/apple-touch-icon.png">
+    <link rel="manifest" href="/BableTalk/site.webmanifest">
+    <link rel="stylesheet" href="/BableTalk/assets/site.css">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "BableTalk",
+        "alternateName": "BabelTalk",
+        "applicationCategory": "CommunicationApplication",
+        "operatingSystem": "Android, iOS",
+        "softwareVersion": "0.0.1",
+        "description": "Face-to-face conversation assistant for Android and iOS. After model setup, speech recognition and translation run on the device. There is no account, API key, or cloud speech and translation call in the conversation.",
+        "url": "https://tajoor621.github.io/BableTalk/",
+        "codeRepository": "https://github.com/Tajoor621/BableTalk",
+        "isAccessibleForFree": true,
+        "releaseNotes": "Development build. Physical-device qualification has not been completed.",
+        "featureList": [
+          "Turn-by-turn face-to-face conversation on one phone",
+          "On-device speech recognition for English, Urdu, Arabic, and experimental Pashto",
+          "On-device translation among English, Urdu, and Arabic",
+          "Review and correction before spoken playback",
+          "Headphone listening and phone-speaker playback",
+          "Local session history with explicit export and deletion"
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+    <header class="site-header" id="top">
+      <div class="wrap header-inner">
+        <a class="wordmark" href="/BableTalk/" translate="no">BableTalk</a>
+        <a class="button primary header-source" href="https://github.com/Tajoor621/BableTalk">Source</a>
+        <nav class="nav" aria-label="Primary">
+          <a href="#conversation">How it works</a>
+          <a href="#languages">Languages</a>
+          <a href="#privacy">Privacy</a>
+          <a href="#limits">Limits</a>
+          <a href="#build">Build</a>
+        </nav>
+      </div>
+    </header>
+    <main id="content">
+      <section class="hero" aria-labelledby="tagline">
+        <div class="wrap hero-grid">
+          <div>
+            <p class="kicker">Android and iOS · on the device</p>
+            <h1 id="tagline">No more language barrier.</h1>
+            <p class="dek">Two people. One phone. Each turn written down, translated, and spoken only after a person has read it.</p>
+            <p>BableTalk is a face-to-face conversation assistant. You choose a language for each person. They take turns at the phone microphone. The app transcribes the turn and translates it on the device, then shows both languages together.</p>
+            <p>Speech and translation models may need a connection the first time you prepare them. The conversation does not ask for an account or an API key, and it does not call a cloud speech or translation service.</p>
+            <div class="actions">
+              <a class="button primary" href="https://github.com/Tajoor621/BableTalk">View the source</a>
+              <a class="button ghost" href="#conversation">See a turn</a>
+            </div>
+            <p class="status-line"><a href="#limits">Development build</a>. It is not a certified interpreter, and the on-device checklist is still open. There is no App Store or Play Store listing.</p>
+          </div>
+          <figure>
+            <div class="device" aria-hidden="true">
+              <div class="screen">
+                <p class="kicker">Private · on-device translation</p>
+                <p class="screen-title" translate="no">BableTalk</p>
+                <p class="screen-sub">A little closer. In your own words.</p>
+                <div class="turn">
+                  <p class="who">Speaker B · <span lang="ur">اردو</span></p>
+                  <p class="said urdu" lang="ur" dir="rtl">کیا آپ کل آ سکتے ہیں؟</p>
+                  <p class="who">English</p>
+                  <p class="said en" lang="en">Can you come tomorrow?</p>
+                </div>
+                <div class="fake-actions">
+                  <span class="pill">Correct words</span>
+                  <span class="pill strong">Play translation</span>
+                </div>
+              </div>
+            </div>
+            <figcaption class="caption">
+              Illustration of the review step, using an example sentence. Speaker B’s Urdu,
+              <span lang="ur" dir="rtl">کیا آپ کل آ سکتے ہیں؟</span>,
+              is shown with the English “Can you come tomorrow?” Playback waits for Play translation.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <div class="facts-wrap">
+        <div class="wrap">
+          <h2 class="visually-hidden">At a glance</h2>
+          <ul class="facts">
+            <li>
+              <h3>On the phone</h3>
+              <p>After the models are prepared, recognition and translation run in the app. The translate step does not download a model and does not call a cloud translator.</p>
+            </li>
+            <li>
+              <h3>No account</h3>
+              <p>There is no sign-in and no API key. The first speech-model download, and translation packs on Wi-Fi, are separate from the conversation.</p>
+            </li>
+            <li>
+              <h3>You approve the words</h3>
+              <p>Stop &amp; translate shows both languages. You can correct the recognised words and translate again. Recording stops before anything is played.</p>
+            </li>
+            <li>
+              <h3>Yours to keep or delete</h3>
+              <p>Audio for a turn stays in memory. Transcripts live in a private database on the device. Sharing happens when you export.</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <section class="section" id="conversation" aria-labelledby="conversation-title">
+        <div class="wrap">
+          <p class="index">01</p>
+          <h2 id="conversation-title">A turn, from start to playback</h2>
+          <p class="intro">The phone is shared. Both people use its microphone, including when headphones are plugged in. Headphones are for listening. The app asks you to name the speaker, so it does not guess who talked.</p>
+          <ol class="steps">
+            <li>
+              <div>
+                <h3>Prepare the models once</h3>
+                <p>In Models, download the speech models. That pack is about 62&nbsp;MB and is checked by size and SHA-256. Then prepare the language pair. Translation packs download on Wi-Fi.</p>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>Choose the two languages</h3>
+                <p>A is your language. B is the other person’s. English, Urdu, and Arabic can be paired with each other. Pashto can be transcribed, and the app will say that translation is unavailable.</p>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>Let one person speak</h3>
+                <p>Start a session, then tap B speaks or A speaks. You can type a turn when speaking is awkward. A phone call, a locked screen, or leaving the app stops the recording.</p>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>Read it, then play it</h3>
+                <p>Tap Stop &amp; translate. Correct the words if they are wrong, then translate again. Tap Play translation when the line is right. The reply aimed at you can play through headphones. Your reply plays on the phone speaker. If the private headphone route fails, the app reports an error.</p>
+              </div>
+            </li>
+            <li>
+              <div>
+                <h3>Save, export, or delete</h3>
+                <p>End the session to finish the record. Open Sessions to export JSON or text, or to delete it. An interrupted session stays in that list so you can see it.</p>
+              </div>
+            </li>
+          </ol>
+          <blockquote class="quote">
+            <p>A little closer. In your own words.</p>
+            <footer>The line shown in the app, above a conversation.</footer>
+          </blockquote>
+        </div>
+      </section>
+
+      <section class="section" id="languages" aria-labelledby="languages-title">
+        <div class="wrap">
+          <p class="index">02</p>
+          <h2 id="languages-title">Languages on the device</h2>
+          <p class="intro">Recognition uses a quantised multilingual Whisper base model, with Silero voice detection in front of it. Translation among English, Urdu, and Arabic uses on-device ML Kit. Pashto is a separate, narrower path.</p>
+          <div class="langs">
+            <article class="lang">
+              <h3 lang="en">English</h3>
+              <p class="en-name">Speech and translation</p>
+              <ul>
+                <li>Pairs with Urdu and with Arabic.</li>
+                <li>A developer installer can still use the earlier English-only speech model. The in-app download uses the multilingual model.</li>
+              </ul>
+            </article>
+            <article class="lang">
+              <h3 lang="ur">اردو</h3>
+              <p class="en-name">Urdu · speech and translation</p>
+              <ul>
+                <li>Pairs with English and with Arabic.</li>
+                <li>Short or mixed Urdu and Hindi can be ambiguous. Confirm the turn before playback.</li>
+              </ul>
+            </article>
+            <article class="lang">
+              <h3 lang="ar">العربية</h3>
+              <p class="en-name">Arabic · speech and translation</p>
+              <ul>
+                <li>Pairs with English and with Urdu.</li>
+                <li>An optional dialect candidate can appear after at least 25 words from the same speaker. The original Arabic is kept.</li>
+                <li>Colloquial wording may need a correction, or a rephrase in Modern Standard Arabic.</li>
+              </ul>
+            </article>
+            <article class="lang">
+              <h3 lang="ps">پښتو</h3>
+              <p class="en-name">Pashto · experimental transcription</p>
+              <ul>
+                <li>Translation and spoken playback are unavailable. The app says so.</li>
+                <li>Treat the transcript as a draft for a person to read, and expect to check it closely.</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="privacy" aria-labelledby="privacy-title">
+        <div class="wrap">
+          <p class="index">03</p>
+          <h2 id="privacy-title">What stays on the phone</h2>
+          <p class="intro">Ask the other person before you record or save their words. The conversation path is built to keep speech and translation on the device. A network check on a real phone is still part of the open device checklist.</p>
+          <div class="split">
+            <article class="panel">
+              <h3>During a conversation</h3>
+              <ul>
+                <li>There is no account to create and no API key to paste in.</li>
+                <li>Audio for the turn is held in memory. It is not written as a recording.</li>
+                <li>The translate call does not start a model download.</li>
+                <li>System voices already on the phone speak the translation. A missing voice leaves the text on screen. There is no speech-synthesis key.</li>
+              </ul>
+            </article>
+            <article class="panel">
+              <h3>What is stored</h3>
+              <ul>
+                <li>Transcripts sit in SQLite on the device. Android backup is off. On iOS the database is kept out of backup, with the system’s file protection.</li>
+                <li>The app does not add its own database encryption. A device passcode matters.</li>
+                <li>Export JSON and Export text are explicit. They open the system share sheet.</li>
+                <li>The live view shows the latest 500 turns. The saved-session list shows the latest 200. The database keeps the session record.</li>
+              </ul>
+            </article>
+          </div>
+          <p class="note">Model setup can use the network: speech files from their published URLs, and translation packs over Wi-Fi. ML Kit’s own terms cover that SDK’s operational metadata. The app is written so a transcript is not sent to a network translation endpoint. Confirm that on a device before you rely on it.</p>
+        </div>
+      </section>
+
+      <section class="section" id="limits" aria-labelledby="limits-title">
+        <div class="wrap">
+          <p class="index">04</p>
+          <h2 id="limits-title">Honest limits</h2>
+          <p class="intro">BableTalk is a development application. The physical-device gate has not been passed. Later features are in the build for testing. They are not a certificate of accuracy, battery life, or headset behaviour.</p>
+          <div class="split">
+            <article class="panel">
+              <h3>In this build</h3>
+              <ul>
+                <li>Turn-by-turn speech, typed turns, correction, and sentence-by-sentence playback.</li>
+                <li>Private headphone output for the translation aimed at you, and the phone speaker for your reply. You can choose the speaker for your own listening.</li>
+                <li>Optional audio language identification. Manual language choice works without it. The optional pack is about 974&nbsp;MB and its licence is CC-BY-NC-4.0.</li>
+                <li>Optional Arabic dialect candidates from a build-generated model. A missing pack leaves translation available. Urdu, Pashto, and English have no dialect labels here.</li>
+                <li>Controls expose button, tab, and radio roles, with labels on the main inputs. Testing with a screen reader on a phone is still open.</li>
+              </ul>
+            </article>
+            <article class="panel caution">
+              <h3>Still open</h3>
+              <ul>
+                <li>It is not a certified interpreter. Confirm names, amounts, dates, negation, and mixed-language turns.</li>
+                <li>No accuracy figure is published for this app. A model card’s score is not BableTalk’s score.</li>
+                <li>A confident language mismatch holds the translation for review. The session pair stays as you set it.</li>
+                <li>Targets for a short wait and a one-hour session are goals. They are not measured results.</li>
+                <li>Android 12 and newer can select a communication device. Android 7 through 11 in this build support explicit wired output. Older Bluetooth routing still needs device-specific work.</li>
+                <li>There is no browser version of the assistant. This page is the project site.</li>
+              </ul>
+            </article>
+          </div>
+          <p class="note">The checklist for a real phone is <a href="https://github.com/Tajoor621/BableTalk/blob/main/docs/DEVICE_ACCEPTANCE.md">docs/DEVICE_ACCEPTANCE.md</a>. A record of what has been checked in development, and what has not, is in <a href="https://github.com/Tajoor621/BableTalk/blob/main/docs/VALIDATION.md">docs/VALIDATION.md</a>.</p>
+        </div>
+      </section>
+
+      <section class="section" id="build" aria-labelledby="build-title">
+        <div class="wrap">
+          <p class="index">05</p>
+          <h2 id="build-title">Build it from the source</h2>
+          <p class="intro">There is no store listing and no hosted demo of the conversation. You build the native app. Source checkout needs Node 22.11 or newer. Android uses JDK 17. iOS needs a Mac with a current Xcode, CocoaPods, and iOS 16 or newer.</p>
+          <div class="build-grid">
+            <article class="panel">
+              <h3>Read the setup</h3>
+              <p>Install, tests, model commands, the Arabic dialect pack, and the offline Android variant are written up in the repository README.</p>
+              <div class="build-actions">
+                <a class="button ink" href="https://github.com/Tajoor621/BableTalk#setup">Setup guide</a>
+                <a class="button line" href="https://github.com/Tajoor621/BableTalk">Repository</a>
+              </div>
+            </article>
+            <article class="panel">
+              <h3>Android test artifact</h3>
+              <p>When the native workflow succeeds, it uploads a development-test APK. The artifact is kept for seven days. It is signed with the public template key. Replace that signing and finish device checks before you share a build as a release.</p>
+              <div class="build-actions">
+                <a class="button ink" href="https://github.com/Tajoor621/BableTalk/actions/workflows/native.yml">Native builds</a>
+              </div>
+            </article>
+          </div>
+          <p class="note">The repository does not include a licence file. Publishing the source does not, by itself, grant a licence to reuse it. Speech weights, ML Kit, and the optional language-identification model have their own terms. The optional model is non-commercial.</p>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap footer-grid">
+        <div>
+          <p class="wordmark" translate="no">BableTalk</p>
+          <p>No more language barrier.</p>
+          <p class="fine">The repository and this project are named BableTalk. The installed app label still reads BabelTalk.</p>
+        </div>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="https://github.com/Tajoor621/BableTalk">Source on GitHub</a>
+          <a href="https://github.com/Tajoor621/BableTalk#setup">Setup guide</a>
+          <a href="https://github.com/Tajoor621/BableTalk/blob/main/docs/DEVICE_ACCEPTANCE.md">Device checklist</a>
+          <a href="#top">Back to top</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

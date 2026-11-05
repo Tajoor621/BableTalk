@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tajoor621.github.io/BableTalk/sitemap.xml
