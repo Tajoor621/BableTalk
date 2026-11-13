@@ -105,8 +105,8 @@ For voice, also install the multilingual speech model from Models.
 | Input | How to use it | Availability |
 | --- | --- | --- |
 | Text | Type, paste, or open a UTF-8 text file up to 256 KiB. | Android and iOS |
-| Photo | Select a photo, check the recognised text, and translate it. | Android supports English, Urdu, Arabic, and Pashto. iOS uses the languages supported by Apple Vision on that device. |
-| Audio file | Select a recording up to 10 minutes in a format the device can decode. | Android and iOS |
+| Photo | Select a photo, check the recognised text, and translate it. | Both platforms support English, Urdu, Arabic, and Pashto with bundled Tesseract models. iOS tries Apple Vision first when available. |
+| Recording | Select an audio file or video up to 10 minutes in a format the device can decode. The app reads its audio track. | Android and iOS |
 | Live voice | Start microphone capture for the selected source language. | Android and iOS |
 | Screen audio | Approve Android's screen-sharing prompt, then play media in an app that allows audio capture. Return to BabelTalk to read the transcript or stop capture. | Android 10 and later |
 
@@ -119,8 +119,7 @@ before closing if you want to keep a copy.
 
 Screen audio translates eligible playback audio and displays the result
 in the Translate window. It does not capture screen pixels, calls, or
-audio from apps that block capture. On iOS, import a local recording for
-translation. The app uses a temporary WAV in private cache for imported
+audio from apps that block capture. On iOS, save a screen recording to Files and open it from **Recording**. The app uses a temporary WAV in private cache for imported
 audio and deletes it after transcription. Live audio stays in memory.
 
 ### Device checks
@@ -186,6 +185,7 @@ npm ci
 npm run typecheck
 npm run lint -- --max-warnings=0
 npm test
+python3 scripts/fetch_ocr.py
 npm run android
 # On macOS:
 cd ios

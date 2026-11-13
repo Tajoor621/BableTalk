@@ -2,7 +2,10 @@ package com.babeltalk.local
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
@@ -74,10 +77,12 @@ class BabelMediaModule(private val app: ReactApplicationContext) : ReactContextB
       mode = operation
       language = code
       try {
-        activity.startActivityForResult(
-          Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType(type),
-          6210,
-        )
+        val picker = Intent(Intent.ACTION_OPEN_DOCUMENT)
+          .addCategory(Intent.CATEGORY_OPENABLE).setType(type)
+        if (operation == "audio") {
+          picker.putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("audio/*", "video/*"))
+        }
+        activity.startActivityForResult(picker, 6210)
       } catch (error: Exception) {
         selection = null
         promise.reject("PICKER", error)
@@ -87,7 +92,7 @@ class BabelMediaModule(private val app: ReactApplicationContext) : ReactContextB
 
   @ReactMethod fun pickText(promise: Promise) = choose("text/plain", "text", "", promise)
   @ReactMethod fun pickPhoto(code: String, promise: Promise) = choose("image/*", "photo", code, promise)
-  @ReactMethod fun pickAudio(promise: Promise) = choose("audio/*", "audio", "", promise)
+  @ReactMethod fun pickAudio(promise: Promise) = choose("*/*", "audio", "", promise)
 
   private fun readText(uri: Uri): String {
     val input = app.contentResolver.openInputStream(uri) ?: error("Could not open the text file.")
@@ -104,6 +109,32 @@ class BabelMediaModule(private val app: ReactApplicationContext) : ReactContextB
     }
     return Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
       .decode(ByteBuffer.wrap(bytes)).toString().removePrefix("\uFEFF")
+  }
+
+  private fun orientPhoto(uri: Uri, bitmap: Bitmap): Bitmap {
+    val orientation = runCatching {
+      app.contentResolver.openInputStream(uri)?.use {
+        ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+      }
+    }.getOrNull()
+    val transform = Matrix()
+    when (orientation) {
+      ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> transform.setScale(-1f, 1f)
+      ExifInterface.ORIENTATION_ROTATE_180 -> transform.setRotate(180f)
+      ExifInterface.ORIENTATION_FLIP_VERTICAL -> transform.setScale(1f, -1f)
+      ExifInterface.ORIENTATION_TRANSPOSE -> {
+        transform.setRotate(90f)
+        transform.postScale(-1f, 1f)
+      }
+      ExifInterface.ORIENTATION_ROTATE_90 -> transform.setRotate(90f)
+      ExifInterface.ORIENTATION_TRANSVERSE -> {
+        transform.setRotate(-90f)
+        transform.postScale(-1f, 1f)
+      }
+      ExifInterface.ORIENTATION_ROTATE_270 -> transform.setRotate(-90f)
+      else -> return bitmap
+    }
+    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, transform, true)
   }
 
   private fun recognisePhoto(uri: Uri, code: String): String {
@@ -135,8 +166,13 @@ class BabelMediaModule(private val app: ReactApplicationContext) : ReactContextB
       val engine = TessBaseAPI()
       try {
         check(engine.init(root.path, code)) { "Could not load the photo recognition model." }
-        engine.setImage(bitmap)
-        return engine.getUTF8Text().orEmpty()
+        val oriented = orientPhoto(uri, bitmap)
+        try {
+          engine.setImage(oriented)
+          return engine.getUTF8Text().orEmpty()
+        } finally {
+          if (oriented !== bitmap) oriented.recycle()
+        }
       } finally {
         engine.recycle()
       }

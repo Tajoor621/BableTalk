@@ -1,4 +1,4 @@
-"""Download and verify the Tesseract models packaged in Android builds."""
+"""Download and verify the Tesseract models packaged in native builds."""
 
 from hashlib import sha1
 from pathlib import Path

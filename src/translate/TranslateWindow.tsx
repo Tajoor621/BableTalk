@@ -26,7 +26,7 @@ import {
 } from './media';
 
 const options = Object.keys(languages) as Language[];
-const modes = ['Text', 'Photo', 'Audio file', 'Live voice', 'Screen audio'] as const;
+const modes = ['Text', 'Photo', 'Recording', 'Live voice', 'Screen audio'] as const;
 type Mode = typeof modes[number];
 
 function Choice({ label, onPress, disabled, selected }: {
@@ -203,9 +203,9 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
   }
 
   async function loadInput() {
-    setStatus(mode === 'Audio file' ? 'Choose a recording to transcribe…' : 'Choose a file…');
+    setStatus(mode === 'Recording' ? 'Choose an audio or video file…' : 'Choose a file…');
     const value = mode === 'Photo' ? await pickPhoto(source)
-      : mode === 'Audio file' ? await importTranscript(source)
+      : mode === 'Recording' ? await importTranscript(source)
       : await pickText();
     if (value === null) {
       setStatus('');
@@ -279,11 +279,11 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
             <Text style={styles.note}>
               {screenAudioAvailable
                 ? 'Android captures permitted media playback after you approve sharing. Captions appear here.'
-                : 'Screen audio is available on Android 10 and later. Use Audio file or Live voice on this device.'}
+                : 'Screen audio is available on Android 10 and later. Import a saved screen recording or use Live voice on this device.'}
             </Text>
           )}
           <View style={styles.row}>
-            {mode === 'Text' || mode === 'Photo' || mode === 'Audio file' ? (
+            {mode === 'Text' || mode === 'Photo' || mode === 'Recording' ? (
               <Choice label={mode === 'Text' ? 'Open text file' : mode === 'Photo' ? 'Read photo' : 'Transcribe recording'}
                 disabled={locked} onPress={() => { void run(loadInput); }} />
             ) : (

@@ -5,6 +5,7 @@
 #import <UIKit/UIKit.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <Vision/Vision.h>
+#import <libtesseract/libtesseract.h>
 #include <math.h>
 #include <string.h>
 
@@ -120,11 +121,11 @@ static NSString *DecodeRecording(NSURL *url, NSError **error) {
   return path;
 }
 
-static NSString *RecognisePhoto(NSURL *url, NSString *language, NSError **error) {
+static NSString *RecogniseWithVision(CGImageRef image, NSString *language) {
   NSString *tag = @{@"eng": @"en", @"urd": @"ur", @"ara": @"ar", @"pus": @"ps"}[language];
   VNRecognizeTextRequest *request = [VNRecognizeTextRequest new];
   request.recognitionLevel = VNRequestTextRecognitionLevelAccurate;
-  NSArray<NSString *> *supported = [request supportedRecognitionLanguagesAndReturnError:error];
+  NSArray<NSString *> *supported = [request supportedRecognitionLanguagesAndReturnError:nil];
   NSString *selected = nil;
   for (NSString *entry in supported) {
     if ([entry isEqualToString:tag] || [entry hasPrefix:[tag stringByAppendingString:@"-"]]) {
@@ -133,11 +134,64 @@ static NSString *RecognisePhoto(NSURL *url, NSString *language, NSError **error)
     }
   }
   if (!selected) {
-    *error = MediaError(@"This iPhone’s photo recogniser does not support the selected language. Paste or type the text to translate it.");
     return nil;
   }
   request.recognitionLanguages = @[selected];
   request.usesLanguageCorrection = YES;
+  VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithCGImage:image options:@{}];
+  BOOL success = [handler performRequests:@[request] error:nil];
+  if (!success) return nil;
+  NSMutableArray<NSString *> *lines = [NSMutableArray new];
+  for (VNRecognizedTextObservation *observation in request.results) {
+    VNRecognizedText *candidate = [observation topCandidates:1].firstObject;
+    if (candidate.string.length) [lines addObject:candidate.string];
+  }
+  return [lines componentsJoinedByString:@"\n"];
+}
+
+static NSString *RecogniseWithTesseract(CGImageRef image, NSString *language, NSError **error) {
+  NSString *model = [NSBundle.mainBundle pathForResource:language ofType:@"traineddata" inDirectory:@"tessdata"];
+  if (!model) {
+    *error = MediaError(@"The offline photo recognition pack is missing. Install a build with the photo models.");
+    return nil;
+  }
+  TessBaseAPI *engine = TessBaseAPICreate();
+  if (!engine) {
+    *error = MediaError(@"Could not initialise photo recognition.");
+    return nil;
+  }
+  NSString *result = nil;
+  @try {
+    NSString *dataDirectory = model.stringByDeletingLastPathComponent;
+    if (TessBaseAPIInit3(engine, dataDirectory.fileSystemRepresentation, language.UTF8String) != 0) {
+      *error = MediaError(@"Could not load the offline photo recognition model.");
+      return nil;
+    }
+    NSData *png = UIImagePNGRepresentation([UIImage imageWithCGImage:image]);
+    PIX *pixels = png.length ? pixReadMem(png.bytes, png.length) : NULL;
+    if (!pixels) {
+      *error = MediaError(@"Could not prepare the photo for recognition.");
+      return nil;
+    }
+    TessBaseAPISetImage2(engine, pixels);
+    char *text = TessBaseAPIGetUTF8Text(engine);
+    if (text) {
+      result = [NSString stringWithUTF8String:text];
+      TessDeleteText(text);
+    }
+    pixDestroy(&pixels);
+    if (!result) *error = MediaError(@"Could not recognise text in the photo.");
+  } @finally {
+    TessBaseAPIDelete(engine);
+  }
+  return result;
+}
+
+static NSString *RecognisePhoto(NSURL *url, NSString *language, NSError **error) {
+  if (![@[@"eng", @"urd", @"ara", @"pus"] containsObject:language]) {
+    *error = MediaError(@"Choose a supported photo language.");
+    return nil;
+  }
   CGImageSourceRef source = CGImageSourceCreateWithURL((__bridge CFURLRef)url, NULL);
   if (!source) {
     *error = MediaError(@"Choose a readable photo.");
@@ -153,23 +207,19 @@ static NSString *RecognisePhoto(NSURL *url, NSString *language, NSError **error)
     *error = MediaError(@"Could not decode the photo.");
     return nil;
   }
-  VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithCGImage:image options:@{}];
-  BOOL success = [handler performRequests:@[request] error:error];
-  CGImageRelease(image);
-  if (!success) return nil;
-  NSMutableArray<NSString *> *lines = [NSMutableArray new];
-  for (VNRecognizedTextObservation *observation in request.results) {
-    VNRecognizedText *candidate = [observation topCandidates:1].firstObject;
-    if (candidate.string.length) [lines addObject:candidate.string];
+  NSString *result = RecogniseWithVision(image, language);
+  if (![result stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) {
+    result = RecogniseWithTesseract(image, language, error);
   }
-  return [lines componentsJoinedByString:@"\n"];
+  CGImageRelease(image);
+  return result;
 }
 
 @implementation BabelMedia
 RCT_EXPORT_MODULE()
 + (BOOL)requiresMainQueueSetup { return NO; }
 
-- (void)pick:(UTType *)type operation:(NSString *)operation language:(NSString *)language
+- (void)pick:(NSArray<UTType *> *)types operation:(NSString *)operation language:(NSString *)language
     resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject {
   dispatch_async(dispatch_get_main_queue(), ^{
     UIViewController *presenter = RCTPresentedViewController();
@@ -182,20 +232,20 @@ RCT_EXPORT_MODULE()
     self.operation = operation;
     self.language = language;
     UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
-      initForOpeningContentTypes:@[type] asCopy:NO];
+      initForOpeningContentTypes:types asCopy:NO];
     picker.delegate = self;
     [presenter presentViewController:picker animated:YES completion:nil];
   });
 }
 
 RCT_EXPORT_METHOD(pickText:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
-  [self pick:UTTypePlainText operation:@"text" language:@"" resolve:resolve reject:reject];
+  [self pick:@[UTTypePlainText] operation:@"text" language:@"" resolve:resolve reject:reject];
 }
 RCT_EXPORT_METHOD(pickPhoto:(NSString *)code resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
-  [self pick:UTTypeImage operation:@"photo" language:code resolve:resolve reject:reject];
+  [self pick:@[UTTypeImage] operation:@"photo" language:code resolve:resolve reject:reject];
 }
 RCT_EXPORT_METHOD(pickAudio:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
-  [self pick:UTTypeAudio operation:@"audio" language:@"" resolve:resolve reject:reject];
+  [self pick:@[UTTypeAudio, UTTypeMovie] operation:@"audio" language:@"" resolve:resolve reject:reject];
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
