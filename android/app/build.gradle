@@ -115,7 +115,15 @@ android {
     }
 }
 
+repositories {
+    maven {
+        url = uri("https://jitpack.io")
+        content { includeGroup("cz.adaptech.tesseract4android") }
+    }
+}
+
 dependencies {
+    implementation("cz.adaptech.tesseract4android:tesseract4android:4.9.0")
     implementation("com.google.mlkit:translate:17.0.3")
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")

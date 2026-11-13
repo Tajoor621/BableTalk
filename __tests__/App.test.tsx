@@ -29,6 +29,7 @@ it('shows the functional conversation interface and explicit language support', 
     .join(' ');
   expect(json).toContain('BabelTalk');
   expect(json).toContain('Start session');
+  expect(json).toContain('Open Translate window');
   expect(json).toContain('Urdu language identification only.');
   await act(async () => root!.unmount());
 });

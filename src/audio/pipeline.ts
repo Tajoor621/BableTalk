@@ -21,6 +21,7 @@ export type Callbacks = {
   onVad: (p: number, speaking: boolean) => void;
   onError: (error: Error) => void;
 };
+export type AudioSource = Omit<typeof LiveAudioStream, "start"> & { start(): void | Promise<void> };
 export class Pipeline {
   private vad?: Silero;
   private lid?: MmsLid;
@@ -44,9 +45,12 @@ export class Pipeline {
   private stopRequested = false;
   constructor(
     private callbacks: Callbacks,
-    private options: { language?: Language; useMms?: boolean } = {},
+    private options: { language?: Language; useMms?: boolean; source?: AudioSource } = {},
   ) {
     this.segmenter = new Segmenter(options.language ? 4 : 8);
+  }
+  private get source() {
+    return this.options.source ?? LiveAudioStream;
   }
   start(): Promise<void> {
     if (this.stopRequested) {
@@ -82,7 +86,7 @@ export class Pipeline {
       useGpu: false,
     });
     this.assertOpen();
-    await LiveAudioStream.init({
+    await this.source.init({
       sampleRate: 16000,
       channels: 1,
       bitsPerSample: 16,
@@ -92,17 +96,7 @@ export class Pipeline {
     this.captureInitialized = true;
     this.assertOpen();
     this.accepting = true;
-    this.lastFrame = Date.now();
-    this.watchdog = setInterval(() => {
-      if (Date.now() - this.lastFrame > 5000) {
-        this.fail(
-          new Error(
-            'Microphone stopped delivering audio. Check interruptions, permissions and input route.',
-          ),
-        );
-      }
-    }, 1000);
-    this.subscription = LiveAudioStream.on('data', (base64: string) => {
+    this.subscription = this.source.on('data', (base64: string) => {
       if (!this.accepting) {
         return;
       }
@@ -119,7 +113,18 @@ export class Pipeline {
         this.fail(e);
       }
     });
-    LiveAudioStream.start();
+    await this.source.start();
+    this.assertOpen();
+    this.lastFrame = Date.now();
+    this.watchdog = setInterval(() => {
+      if (Date.now() - this.lastFrame > 5000) {
+        this.fail(
+          new Error(
+            'Microphone stopped delivering audio. Check interruptions, permissions and input route.',
+          ),
+        );
+      }
+    }, 1000);
   }
   private fail(error: unknown) {
     if (this.failed) {
@@ -127,7 +132,7 @@ export class Pipeline {
     }
     this.failed = true;
     this.accepting = false;
-    this.captureStop = Promise.resolve(LiveAudioStream.stop());
+    this.captureStop = Promise.resolve(this.source.stop());
     this.captureStop.catch(() => {});
     this.callbacks.onError(
       error instanceof Error ? error : new Error(String(error)),
@@ -209,7 +214,7 @@ export class Pipeline {
     this.stopRequested = true;
     this.accepting = false;
     if (this.captureInitialized && !this.captureStop) {
-      this.captureStop = Promise.resolve(LiveAudioStream.stop());
+      this.captureStop = Promise.resolve(this.source.stop());
       this.captureStop.catch(() => {});
     }
     if (!this.closing) {
@@ -233,7 +238,7 @@ export class Pipeline {
     try {
       if (subscription || captureInitialized) {
         try {
-          await (this.captureStop || Promise.resolve(LiveAudioStream.stop()));
+          await (this.captureStop || Promise.resolve(this.source.stop()));
         } finally {
           subscription?.remove();
         }

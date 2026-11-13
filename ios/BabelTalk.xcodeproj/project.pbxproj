@@ -13,6 +13,7 @@
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		BA6210010000000000000001 /* BabelLocal.m in Sources */ = {isa = PBXBuildFile; fileRef = BA6210010000000000000002; };
 		BA6210010000000000000003 /* BabelStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = BA6210010000000000000004; };
+		BA6210010000000000000006 /* BabelMedia.m in Sources */ = {isa = PBXBuildFile; fileRef = BA6210010000000000000007; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		BA6210010000000000000002 /* BabelLocal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BabelLocal.m; path = BabelTalk/BabelLocal.m; sourceTree = "<group>"; };
 		BA6210010000000000000004 /* BabelStorage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = BabelStorage.m; path = BabelTalk/BabelStorage.m; sourceTree = "<group>"; };
+		BA6210010000000000000007 /* BabelMedia.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BabelTalk/BabelMedia.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +50,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				BA6210010000000000000002 /* BabelLocal.m */,
 				BA6210010000000000000004 /* BabelStorage.m */,
+				BA6210010000000000000007 /* BabelMedia.m */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
@@ -265,6 +268,7 @@
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				BA6210010000000000000001 /* BabelLocal.m in Sources */,
 				BA6210010000000000000003 /* BabelStorage.m in Sources */,
+				BA6210010000000000000006 /* BabelMedia.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

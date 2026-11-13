@@ -20,6 +20,7 @@ no API key, and no cloud speech or translation call in that path.
 ## Contents
 
 - [What a conversation does](#what-a-conversation-does)
+- [Translate window](#translate-window)
 - [Languages](#languages)
 - [Privacy](#privacy)
 - [Name](#name)
@@ -95,6 +96,44 @@ Specialised Urdu or Arabic Whisper checkpoints, and MOSS or Kitten voices,
 are not part of this build. The running baseline is multilingual Whisper
 plus whatever matching system voice is installed.
 
+## Translate window
+
+From the home screen, select **Open Translate window** and choose the
+source and target languages. Download the pair before going offline.
+For voice, also install the multilingual speech model from Models.
+
+| Input | How to use it | Availability |
+| --- | --- | --- |
+| Text | Type, paste, or open a UTF-8 text file up to 256 KiB. | Android and iOS |
+| Photo | Select a photo, check the recognised text, and translate it. | Android supports English, Urdu, Arabic, and Pashto. iOS uses the languages supported by Apple Vision on that device. |
+| Audio file | Select a recording up to 10 minutes in a format the device can decode. | Android and iOS |
+| Live voice | Start microphone capture for the selected source language. | Android and iOS |
+| Screen audio | Approve Android's screen-sharing prompt, then play media in an app that allows audio capture. Return to BabelTalk to read the transcript or stop capture. | Android 10 and later |
+
+English, Urdu, and Arabic translate offline after model setup. Pashto is
+available for transcription and text review. Review names, numbers, and
+negation before sharing. **Read aloud** uses an installed offline system
+voice for the selected language. **Export text** opens the system share
+sheet. The Translate window keeps its text until you close it. Export
+before closing if you want to keep a copy.
+
+Screen audio translates eligible playback audio and displays the result
+in the Translate window. It does not capture screen pixels, calls, or
+audio from apps that block capture. On iOS, import a local recording for
+translation. The app uses a temporary WAV in private cache for imported
+audio and deletes it after transcription. Live audio stays in memory.
+
+### Device checks
+
+After downloading models, switch to airplane mode and try text, a
+printed photo, an imported recording, and live voice. Use at least one
+English, Urdu, and Arabic sample with a known reference, and check the
+source and translation independently. Verify offline playback with an
+installed voice and export only when requested. On Android, approve and
+cancel the system capture prompt, then test permitted media playback and
+stop from the Android screen-sharing controls. Use a local media file so
+the airplane-mode check does not depend on streaming.
+
 ## Languages
 
 | Language | Speech | Translation |
@@ -114,7 +153,7 @@ history.
 Android backup is disabled. iOS stores the database in an Application
 Support folder excluded from backup and uses OS file protection. The app
 does not add its own database encryption. Protect the device with a screen
-lock. No audio is persisted. The most recent 500 turns are shown during a
+lock. Conversation audio stays in memory. The most recent 500 turns are shown during a
 session. The database retains the session record. The saved-session list
 shows the latest 200. Only an explicit Export action opens the system
 share sheet.
@@ -198,9 +237,11 @@ pipeline default and by the developer model installer.
 
 ## Android test build
 
-For an independent Android test build with embedded JavaScript:
+For an independent Android test build with embedded JavaScript, fetch the
+pinned Tesseract photo models from the project root first.
 
 ```sh
+python3 scripts/fetch_ocr.py
 cd android
 ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
 adb install -r app/build/outputs/apk/release/app-release.apk

@@ -16,6 +16,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { Pipeline } from './src/audio/pipeline';
+import { TranslateWindow } from './src/translate/TranslateWindow';
 import { Conversation } from './src/conversation/engine';
 import {
   Language,
@@ -97,6 +98,7 @@ function LanguageSelector({
 }
 function BabelTalk() {
   const engine = useRef(new Conversation()).current;
+  const [translatorOpen, setTranslatorOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('Conversation');
   const [a, setA] = useState<Language>('eng');
   const [b, setB] = useState<Language>('urd');
@@ -463,6 +465,19 @@ function BabelTalk() {
         </Text>
         <Text style={styles.subtitle}>A little closer. In your own words.</Text>
       </View>
+      <Button
+        label="Open Translate window"
+        secondary
+        disabled={busyUi || !!session}
+        onPress={() => {
+          if (!busy.current && !engine.session) {
+            setTranslatorOpen(true);
+          }
+        }}
+      />
+      {translatorOpen && (
+        <TranslateWindow initialSource={a} initialTarget={b} onClose={() => setTranslatorOpen(false)} />
+      )}
       <View style={styles.tabs}>
         {(['Conversation', 'Sessions', 'Models', 'Help'] as Tab[]).map(
           value => (
