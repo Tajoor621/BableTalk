@@ -110,8 +110,10 @@ For voice, also install the multilingual speech model from Models.
 | Live voice | Start microphone capture for the selected source language. | Android and iOS |
 | Screen audio | Approve Android's screen-sharing prompt, then play media in an app that allows audio capture. Return to BabelTalk to read the transcript or stop capture. | Android 10 and later |
 
-English, Urdu, and Arabic translate offline after model setup. Pashto is
-available for transcription and text review. Review names, numbers, and
+English, Urdu, and Arabic translate offline after model setup. The
+Translate window also offers experimental Pashto speech to English using
+multilingual Whisper. Pashto text translation and translation into Pashto
+remain unavailable. Review names, numbers, and
 negation before sharing. **Read aloud** uses an installed offline system
 voice for the selected language. **Export text** opens the system share
 sheet. The Translate window keeps its text until you close it. Export
@@ -140,7 +142,7 @@ the airplane-mode check does not depend on streaming.
 | English | Multilingual Whisper base | On-device, with Urdu and Arabic |
 | Urdu | Multilingual Whisper base | On-device, with English and Arabic |
 | Arabic | Multilingual Whisper base | On-device, with English and Urdu. Optional dialect candidate after enough same-speaker text. |
-| Pashto | Experimental transcription | Unavailable. Playback of a translation is unavailable. |
+| Pashto | Experimental transcription | Experimental speech to English in the Translate window. Text translation and translation into Pashto are unavailable. |
 
 ## Privacy
 

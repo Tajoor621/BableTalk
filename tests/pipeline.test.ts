@@ -157,3 +157,26 @@ it('waits for native microphone shutdown before releasing inference resources', 
   await stopped;
   expect(mockWhisperRelease).toHaveBeenCalledTimes(1);
 });
+
+it('preserves Pashto speech when English audio translation fails', async () => {
+  mockTranscribe
+    .mockReturnValueOnce({ promise: Promise.resolve({ result: 'سلام' }) })
+    .mockImplementationOnce(() => ({
+      promise: Promise.reject(new Error('English decode failed')),
+    }));
+  const callbacks = { onText: jest.fn(), onVad: jest.fn(), onError: jest.fn() };
+  const pipeline = new Pipeline(callbacks, {
+    language: 'pus',
+    translatePashtoSpeech: true,
+  });
+  await pipeline.start();
+  mockAudio(Buffer.alloc(512 * 2 * 10).toString('base64'));
+  await pipeline.stop();
+  expect(mockTranscribe).toHaveBeenNthCalledWith(
+    2, expect.any(ArrayBuffer), expect.objectContaining({ language: 'ps', translate: true }),
+  );
+  expect(callbacks.onText).toHaveBeenCalledWith(
+    expect.objectContaining({ text: 'سلام', englishTranslation: undefined }),
+  );
+  expect(callbacks.onError).not.toHaveBeenCalled();
+});

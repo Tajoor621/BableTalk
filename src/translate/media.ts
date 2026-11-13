@@ -1,3 +1,4 @@
+import { Buffer } from 'buffer';
 import { DeviceEventEmitter, NativeModules, Platform } from 'react-native';
 import type { AudioSource } from '../audio/pipeline';
 import { Language, languages } from '../linguistics/languages';
@@ -36,30 +37,105 @@ export function screenAudioSource(): AudioSource {
   };
 }
 
-export async function importTranscript(language: Language) {
-  const [{ default: RNFS }, { initWhisper }, models] = await Promise.all([
-    import('react-native-fs'),
-    import('whisper.rn/index'),
-    verifyModels('multilingual'),
-  ]);
+export async function importTranscript(
+  language: Language,
+  translatePashtoSpeech: boolean,
+  onProgress: (percent: number) => void,
+) {
+  const [{ default: RNFS }, { initWhisper }, { Silero }, { PcmFramer, Segmenter }, models] =
+    await Promise.all([
+      import('react-native-fs'),
+      import('whisper.rn/index'),
+      import('../audio/silero'),
+      import('../audio/segmenter'),
+      verifyModels('multilingual'),
+    ]);
   const path = await media().pickAudio();
   if (!path) {
     return null;
   }
   try {
-    const context = await initWhisper({ filePath: models.whisper, useGpu: false });
+    onProgress(0);
+    const size = Number((await RNFS.stat(path)).size);
+    const wavHeaderBytes = 44; // Both native importers write a fixed PCM WAV header.
+    if (!Number.isSafeInteger(size) || size <= wavHeaderBytes || size > wavHeaderBytes + 19200000 || size % 2 !== 0) {
+      throw new Error('The recording contains invalid or unsupported audio.');
+    }
+    const vad = await Silero.create(models.vad);
     try {
-      const result = await context.transcribe(path, {
-        language: languages[language].tag,
-        translate: false,
-        maxThreads: 2,
-      }).promise;
-      if (!result.result.trim()) {
-        throw new Error('No speech was recognised in the selected recording.');
+      const framer = new PcmFramer();
+      const segmenter = new Segmenter(4);
+      const source: string[] = [];
+      const english: string[] = [];
+      let completeTranslation = true;
+      let context: Awaited<ReturnType<typeof initWhisper>> | undefined;
+      async function decode(samples: Float32Array) {
+        context ??= await initWhisper({ filePath: models.whisper, useGpu: false });
+        const audio = samples.buffer as ArrayBuffer;
+        const text = (await context.transcribeData(audio, {
+          language: languages[language].tag,
+          translate: false,
+          maxThreads: 2,
+        }).promise).result.trim();
+        if (!text) {
+          return;
+        }
+        source.push(text);
+        if (translatePashtoSpeech && completeTranslation) {
+          try {
+            const translated = (await context.transcribeData(audio, {
+              language: 'ps',
+              translate: true,
+              maxThreads: 2,
+            }).promise).result.trim();
+            completeTranslation = Boolean(translated);
+            if (translated) {
+              english.push(translated);
+            }
+          } catch {
+            completeTranslation = false;
+          }
+        }
       }
-      return result.result.trim();
+      try {
+        const blockSize = 32768;
+        for (let position = wavHeaderBytes; position < size; position += blockSize) {
+          const count = Math.min(blockSize, size - position);
+          const bytes = Buffer.from(await RNFS.read(path, count, position, 'base64'), 'base64');
+          if (bytes.length !== count) {
+            throw new Error('The recording could not be read in full.');
+          }
+          for (const frame of framer.push(bytes)) {
+            const segment = segmenter.push(frame, await vad.probability(frame));
+            if (segment) {
+              await decode(segment.samples);
+            }
+          }
+          onProgress(Math.min(99, Math.floor((position + count - wavHeaderBytes) / (size - wavHeaderBytes) * 100)));
+        }
+        const tail = framer.flush();
+        if (tail) {
+          const segment = segmenter.push(tail, await vad.probability(tail));
+          if (segment) {
+            await decode(segment.samples);
+          }
+        }
+        const final = segmenter.flush();
+        if (final) {
+          await decode(final.samples);
+        }
+        if (!source.length) {
+          throw new Error('No speech was recognised in the selected recording.');
+        }
+        return {
+          text: source.join('\n'),
+          english: completeTranslation ? english.join('\n') : '',
+        };
+      } finally {
+        await context?.release();
+      }
     } finally {
-      await context.release();
+      await vad.release();
     }
   } finally {
     await RNFS.unlink(path).catch(() => {});

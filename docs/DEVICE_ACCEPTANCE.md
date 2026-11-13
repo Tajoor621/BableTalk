@@ -66,3 +66,22 @@ Do not substitute guessed test results or published model benchmark numbers.
   change stops or rejects capture rather than recording from the wrong input.
 - Confirm automatic screen timeout is suspended only during an active visible
   session and restored on End Session. Manual screen locking still stops capture.
+
+## Translate window
+
+- Open and translate pasted text and a UTF-8 file with mixed Arabic, Urdu and
+  English names. Verify paragraph breaks, right-to-left selection and export.
+- In airplane mode, try printed English, Arabic, Urdu and Pashto photos. Include
+  a rotated Android camera photo and an iPhone photo that uses the bundled OCR
+  fallback. Record reference text and count character errors.
+- Import a clean voice memo, a silent WAV, a saved screen-recording video and
+  a video with no audio track. Check progress, final speech, rejection messages
+  and private temporary-file cleanup. Repeat with a near-ten-minute recording.
+- For experimental Pashto speech to English, check both texts with a bilingual
+  reviewer. Include names, negation and amounts. Record transcription errors
+  separately from translation errors.
+- On Android, cancel the screen-capture prompt and verify the previous draft
+  survives. Start again with capture-enabled playback. Verify system stop,
+  restart, and that unrelated microphone speech does not enter the transcript.
+- On both platforms, deny microphone permission, test Stop playback, and repeat
+  a capture after backgrounding. Verify the final transcript is editable.

@@ -15,6 +15,7 @@ export type Transcript = {
   detectedLanguage?: Language;
   languageMethod?: 'selected' | 'mms';
   warning?: string;
+  englishTranslation?: string;
 };
 export type Callbacks = {
   onText: (value: Transcript) => void;
@@ -45,7 +46,7 @@ export class Pipeline {
   private stopRequested = false;
   constructor(
     private callbacks: Callbacks,
-    private options: { language?: Language; useMms?: boolean; source?: AudioSource } = {},
+    private options: { language?: Language; useMms?: boolean; source?: AudioSource; translatePashtoSpeech?: boolean } = {},
   ) {
     this.segmenter = new Segmenter(options.language ? 4 : 8);
   }
@@ -197,6 +198,17 @@ export class Pipeline {
       const result = await task.promise;
       const text = result.result.trim();
       if (text) {
+        let englishTranslation: string | undefined;
+        if (this.options.translatePashtoSpeech && route === 'pus') {
+          try {
+            englishTranslation = (await this.whisper!.transcribeData(
+              segment.samples.buffer as ArrayBuffer,
+              { language: 'ps', translate: true, maxThreads: 2 },
+            ).promise).result.trim() || undefined;
+          } catch {
+            warning = 'English speech translation failed. The Pashto transcript is available.';
+          }
+        }
         this.callbacks.onText({
           id: this.id++,
           text,
@@ -206,6 +218,7 @@ export class Pipeline {
           detectedLanguage,
           languageMethod: detectedLanguage ? 'mms' : 'selected',
           warning,
+          englishTranslation,
         });
       }
     }

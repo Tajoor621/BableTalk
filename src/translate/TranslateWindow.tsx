@@ -70,6 +70,8 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
   const mounted = useRef(true);
   const canTranslate = source === target ||
     (languages[source].translation && languages[target].translation);
+  const speechTranslation = source === 'pus' && target === 'eng' &&
+    (mode === 'Recording' || mode === 'Live voice' || mode === 'Screen audio');
   const locked = busy || recording;
 
   function report(reason: unknown) {
@@ -160,15 +162,28 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
     if (!screen && AppState.currentState !== 'active') {
       throw new Error('Return to BabelTalk before starting live voice capture.');
     }
-    updateInput('');
+    let hasTranscript = false;
     work.current = Promise.resolve();
     const pipeline = new Pipeline({
       onText: segment => {
         if (!mounted.current) {
           return;
         }
-        setInput(previous => previous ? previous + '\n' + segment.text : segment.text);
-        if (translateLive) {
+        if (!hasTranscript) {
+          updateInput(segment.text);
+          hasTranscript = true;
+        } else {
+          setInput(previous => previous + '\n' + segment.text);
+        }
+        if (speechTranslation) {
+          if (segment.englishTranslation) {
+            const translated = segment.englishTranslation;
+            setOutput(previous => previous ? previous + '\n' + translated : translated);
+          } else {
+            setOutput(previous => previous ? previous + '\n[Translation unavailable]' : '[Translation unavailable]');
+            report('A Pashto segment has no English translation. Review the source transcript.');
+          }
+        } else if (translateLive) {
           work.current = work.current.then(async () => {
             if (!mounted.current) {
               return;
@@ -185,7 +200,7 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
         report(reason);
         void stop(false).catch(report);
       },
-    }, { language: source, source: screen ? screenAudioSource() : undefined });
+    }, { language: source, source: screen ? screenAudioSource() : undefined, translatePashtoSpeech: speechTranslation });
     live.current = { pipeline, screen };
     try {
       await pipeline.start();
@@ -193,7 +208,7 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
         return;
       }
       setRecording(true);
-      setStatus(translateLive
+      setStatus(translateLive || speechTranslation
         ? screen ? 'Screen audio is active. Return here or use Android’s screen-sharing controls to stop.' : 'Listening to the phone microphone…'
         : 'Transcribing. Prepare the selected pair to translate afterwards.');
     } catch (reason) {
@@ -204,9 +219,23 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
 
   async function loadInput() {
     setStatus(mode === 'Recording' ? 'Choose an audio or video file…' : 'Choose a file…');
-    const value = mode === 'Photo' ? await pickPhoto(source)
-      : mode === 'Recording' ? await importTranscript(source)
-      : await pickText();
+    if (mode === 'Recording') {
+      const result = await importTranscript(source, speechTranslation, percent => {
+        setStatus(`Transcribing recording… ${percent}%`);
+      });
+      if (!result) {
+        setStatus('');
+        return;
+      }
+      updateInput(result.text);
+      setOutput(result.english);
+      if (speechTranslation && !result.english) {
+        report('English speech translation could not finish. The Pashto transcript is available.');
+      }
+      setStatus('Review the transcript below.');
+      return;
+    }
+    const value = mode === 'Photo' ? await pickPhoto(source) : await pickText();
     if (value === null) {
       setStatus('');
       return;
@@ -274,7 +303,11 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
           </View>
           {selectLanguage('From', source, setSource)}
           {selectLanguage('To', target, setTarget)}
-          {!canTranslate && <Text style={styles.note}>Pashto supports transcription and review.</Text>}
+          {!canTranslate && (
+            <Text style={styles.note}>{speechTranslation
+              ? 'Experimental Pashto speech to English. Corrections change the source transcript only.'
+              : 'Pashto text translation is unavailable. Pashto speech can be translated to English in Recording, Live voice, or Android Screen audio.'}</Text>
+          )}
           {mode === 'Screen audio' && (
             <Text style={styles.note}>
               {screenAudioAvailable
@@ -306,7 +339,7 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
           <Text style={styles.label}>Source text or transcript</Text>
           <TextInput accessibilityLabel="Source text or transcript" multiline editable={!locked}
             placeholder="Type, paste, or import text" placeholderTextColor="#a5b9cb"
-            value={input} onChangeText={updateInput}
+            value={input} onChangeText={speechTranslation ? setInput : updateInput}
             style={[styles.input, languages[source].rtl && styles.rtl]} />
           {!!warning && <Text style={styles.note}>{warning}</Text>}
           <View style={styles.row}>
@@ -317,7 +350,7 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
                   setStatus('');
                 });
               }} />
-            <Choice label="Read source aloud" disabled={locked || !input.trim()}
+            <Choice label="Read source aloud" disabled={locked || !input.trim() || source === 'pus'}
               onPress={() => { void run(() => play(input, source)); }} />
           </View>
           <Text style={styles.label}>Translation</Text>
