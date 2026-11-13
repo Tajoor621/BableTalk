@@ -191,7 +191,6 @@ export class Conversation {
     const operation = this.queue.then(async () => {
       const source = row.speaker === 'A' ? session.lang_a : session.lang_b;
       const target = row.speaker === 'A' ? session.lang_b : session.lang_a;
-      validatePair(source, target);
       const corrected = text.trim();
       if (!corrected) {
         throw new Error('Enter the words actually spoken');
@@ -204,10 +203,11 @@ export class Conversation {
         translated_text: '',
         revision: row.revision + 1,
         state: 'pending' as Utterance['state'],
-        warning: 'Edited by user. Translation regenerated.',
+        warning: 'Edited by user.',
       };
       await this.db.update(value);
       try {
+        validatePair(source, target);
         value.translated_text = await this.api().translate(
           corrected,
           languages[source].tag,
@@ -219,9 +219,8 @@ export class Conversation {
         value.state = 'ready';
       } catch (e) {
         value.state = 'error';
-        value.warning = String(e);
+        value.warning += ' ' + (e instanceof Error ? e.message : String(e));
       }
-      await this.db.update(value);
       await this.annotate(value, source);
       await this.db.update(value);
       return value;
@@ -261,7 +260,7 @@ export class Conversation {
     }
     this.ending = true;
     try {
-      await this.stopPlayback();
+      await this.stopPlayback().catch(() => {});
       await this.queue;
       await this.db.end(this.session.id);
       this.session = undefined;

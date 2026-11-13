@@ -4,7 +4,7 @@ The application now implements an offline mobile conversation workflow beyond
 the original English-only foundation. The earlier physical-device gate has not
 been passed; these integrations are for development qualification.
 
-Executed locally:
+Baseline checks from 31 October 2026:
 
 - TypeScript and zero-warning lint; 41 Jest tests covering PCM, VAD context,
   capture cancellation during startup, short-reply boundaries, awaited native microphone init/stop, cleanup, language mappings, ambiguity,
@@ -38,5 +38,11 @@ Still unverified: physical Android/iPhone audio, route changes, system voice
 availability, real conversational WER/translation adequacy/dialect calibration,
 p50/p95 end-of-speech latency, one-hour battery, low-memory behaviour, accessibility
 with assistive technology, and real-user bilingual comprehension. Pashto
-translation is unavailable. Specialised Urdu/Arabic ASR and bundled neural TTS
-are not represented as completed integrations.
+text translation and translation into Pashto are unavailable. The Translate
+window offers experimental Pashto speech-to-English. Specialised Urdu/Arabic
+ASR and bundled neural TTS remain open work.
+
+The current Android and iOS build results, plus automated verification, are
+listed in [GitHub Actions](https://github.com/Tajoor621/BableTalk/actions).
+See [the device checklist](DEVICE_ACCEPTANCE.md) for physical verification
+of imported recordings, Chinese handwriting, and Mandarin and Cantonese speech.

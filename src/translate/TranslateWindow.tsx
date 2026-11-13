@@ -135,6 +135,10 @@ export function TranslateWindow({ initialSource, initialTarget, chineseNote = fa
       }
     });
     const state = AppState.addEventListener('change', value => {
+      if (value !== 'active' && playback.current) {
+        playback.current = false;
+        void requireLocal().stopSpeech().catch(report);
+      }
       if (value !== 'active' && live.current && !live.current.screen) {
         void stop(true).catch(report);
       }
@@ -164,7 +168,11 @@ export function TranslateWindow({ initialSource, initialTarget, chineseNote = fa
     }
     let translateLive = canTranslate;
     if (translateLive && source !== target) {
-      translateLive = await requireLocal().pairReady(languages[source].tag, languages[target].tag);
+      try {
+        translateLive = await requireLocal().pairReady(languages[source].tag, languages[target].tag);
+      } catch {
+        translateLive = false;
+      }
     }
     if (!screen && AppState.currentState !== 'active') {
       throw new Error('Return to BabelTalk before starting live voice capture.');
@@ -199,7 +207,12 @@ export function TranslateWindow({ initialSource, initialTarget, chineseNote = fa
             if (mounted.current) {
               setOutput(previous => previous ? previous + '\n' + result : result);
             }
-          }).catch(report);
+          }).catch(reason => {
+            if (mounted.current) {
+              setOutput(previous => previous ? previous + '\n[Translation unavailable]' : '[Translation unavailable]');
+            }
+            report(reason);
+          });
         }
       },
       onVad: () => {},
@@ -217,7 +230,7 @@ export function TranslateWindow({ initialSource, initialTarget, chineseNote = fa
       setRecording(true);
       setStatus(translateLive || speechTranslation
         ? screen ? 'Screen audio is active. Return here or use Android’s screen-sharing controls to stop.' : 'Listening to the phone microphone…'
-        : 'Transcribing. Prepare the selected pair to translate afterwards.');
+        : canTranslate ? 'Transcribing. Download the selected pair to translate afterwards.' : 'Transcribing for review.');
     } catch (reason) {
       await stop(false);
       throw reason;

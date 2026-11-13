@@ -44,8 +44,8 @@ no API key, and no cloud speech or translation call in that path.
 - Multilingual quantised Whisper base for English, Urdu, Arabic, and Chinese, plus
   experimental Pashto transcription.
 - English, Urdu, Arabic, and Chinese translate with each other through on-device
-  ML Kit. Pashto translation is unavailable. An English pivot is not used
-  to invent a missing Pashto model.
+  ML Kit. Conversation saves Pashto as an editable transcript. The Translate
+  window additionally offers experimental Pashto speech-to-English.
 - Speaker A and speaker B are explicit. The phone does not guess who spoke.
   Both people use the phone microphone, including while headphones are
   connected.
@@ -219,7 +219,8 @@ npm run ios
 
 Open Models, download the speech models (about 62 MB: Silero plus
 multilingual Whisper base, quantised), select the two languages, and
-prepare the pair on Wi-Fi. ML Kit manages translation-model integrity
+prepare the pair on Wi-Fi. For typed conversations, preparing the pair is enough.
+ML Kit manages translation-model integrity
 through its SDK. Those weights are not part of the open speech-model lock.
 Playback needs a matching system voice. The translated text stays on screen
 when a voice is missing. There is no speech-synthesis service key. Check
@@ -292,8 +293,9 @@ behaviour during device qualification.
 
 On a Mac, install pods and run the app with the commands in
 [Setup](#setup). The native workflow builds an unsigned iOS binary
-(`CODE_SIGNING_ALLOWED=NO`). That job is a compile check. It is not an
-App Store package.
+(`CODE_SIGNING_ALLOWED=NO`) in Release configuration. CI checks that the
+application contains its JavaScript bundle and OCR model files. Install on a
+physical iPhone using Xcode and your development signing team.
 
 ## Arabic dialect pack
 

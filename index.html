@@ -46,8 +46,8 @@
         "releaseNotes": "Development build. Physical-device qualification has not been completed.",
         "featureList": [
           "Turn-by-turn face-to-face conversation on one phone",
-          "On-device speech recognition for English, Urdu, Arabic, and experimental Pashto",
-          "On-device translation among English, Urdu, and Arabic",
+          "On-device speech recognition for English, Urdu, Arabic, Mandarin, and experimental Pashto",
+          "On-device translation among English, Urdu, Arabic, and Chinese",
           "Review and correction before spoken playback",
           "Headphone listening and phone-speaker playback",
           "Local session history with explicit export and deletion"
@@ -151,7 +151,7 @@
             <li>
               <div>
                 <h3>Choose the two languages</h3>
-                <p>A is your language. B is the other person’s. English, Urdu, and Arabic can be paired with each other. Pashto can be transcribed, and the app will say that translation is unavailable.</p>
+                <p>A is your language. B is the other person’s. English, Urdu, Arabic, and Chinese can be paired with each other. Pashto is transcription-only in Conversation. The Translate window offers experimental Pashto speech-to-English.</p>
               </div>
             </li>
             <li>
@@ -184,13 +184,13 @@
         <div class="wrap">
           <p class="index">02</p>
           <h2 id="languages-title">Languages on the device</h2>
-          <p class="intro">Recognition uses a quantised multilingual Whisper base model, with Silero voice detection in front of it. Translation among English, Urdu, and Arabic uses on-device ML Kit. Pashto is a separate, narrower path.</p>
+          <p class="intro">Recognition uses a quantised multilingual Whisper base model, with Silero voice detection in front of it. Translation among English, Urdu, Arabic, and Chinese uses on-device ML Kit. Pashto is a separate, narrower path.</p>
           <div class="langs">
             <article class="lang">
               <h3 lang="en">English</h3>
               <p class="en-name">Speech and translation</p>
               <ul>
-                <li>Pairs with Urdu and with Arabic.</li>
+                <li>Pairs with Urdu, Arabic, and Chinese.</li>
                 <li>A developer installer can still use the earlier English-only speech model. The in-app download uses the multilingual model.</li>
               </ul>
             </article>
@@ -198,7 +198,7 @@
               <h3 lang="ur">اردو</h3>
               <p class="en-name">Urdu · speech and translation</p>
               <ul>
-                <li>Pairs with English and with Arabic.</li>
+                <li>Pairs with English, Arabic, and Chinese.</li>
                 <li>Short or mixed Urdu and Hindi can be ambiguous. Confirm the turn before playback.</li>
               </ul>
             </article>
@@ -206,16 +206,24 @@
               <h3 lang="ar">العربية</h3>
               <p class="en-name">Arabic · speech and translation</p>
               <ul>
-                <li>Pairs with English and with Urdu.</li>
+                <li>Pairs with English, Urdu, and Chinese.</li>
                 <li>An optional dialect candidate can appear after at least 25 words from the same speaker. The original Arabic is kept.</li>
                 <li>Colloquial wording may need a correction, or a rephrase in Modern Standard Arabic.</li>
+              </ul>
+            </article>
+            <article class="lang">
+              <h3 lang="zh">中文</h3>
+              <p class="en-name">Chinese · speech, notes, and translation</p>
+              <ul>
+                <li>Mandarin in Conversation and Translate. Experimental Cantonese in Translate with an optional 574 MB speech model.</li>
+                <li>Use Chinese note → English to recognise and correct a photo of a Simplified or Traditional handwritten note before translating.</li>
               </ul>
             </article>
             <article class="lang">
               <h3 lang="ps">پښتو</h3>
               <p class="en-name">Pashto · experimental transcription</p>
               <ul>
-                <li>Translation and spoken playback are unavailable. The app says so.</li>
+                <li>The Translate window offers experimental Pashto speech-to-English. Pashto text translation and translation into Pashto are unavailable.</li>
                 <li>Treat the transcript as a draft for a person to read, and expect to check it closely.</li>
               </ul>
             </article>
@@ -262,6 +270,7 @@
               <h3>In this build</h3>
               <ul>
                 <li>Turn-by-turn speech, typed turns, correction, and sentence-by-sentence playback.</li>
+                <li>The Translate window accepts text, photos, recordings and live voice. Android 10 and later can also capture eligible playback audio with permission.</li>
                 <li>Private headphone output for the translation aimed at you, and the phone speaker for your reply. You can choose the speaker for your own listening.</li>
                 <li>Optional audio language identification. Manual language choice works without it. The optional pack is about 974&nbsp;MB and its licence is CC-BY-NC-4.0.</li>
                 <li>Optional Arabic dialect candidates from a build-generated model. A missing pack leaves translation available. Urdu, Pashto, and English have no dialect labels here.</li>

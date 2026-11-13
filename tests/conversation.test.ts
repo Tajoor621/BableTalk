@@ -203,3 +203,26 @@ it('prevents simultaneous session starts', async () => {
   await expect(engine.start('eng', 'ara')).rejects.toThrow('End');
   await first;
 });
+
+it('saves corrections to a transcription-only Pashto turn', async () => {
+  const { api, db, engine } = fixture();
+  await engine.start('eng', 'pus');
+  const row = await engine.receive('B', 'سلام');
+  const correction = await engine.correct(row, 'وعلیکم سلام');
+  expect(correction.original_text).toBe('وعلیکم سلام');
+  expect(correction.revision).toBe(1);
+  expect(correction.state).toBe('error');
+  expect(correction.warning).toContain('transcription only');
+  expect(db.update).toHaveBeenLastCalledWith(correction);
+  expect(api.translate).not.toHaveBeenCalled();
+});
+
+it('finalises the saved session when playback shutdown fails', async () => {
+  const { api, db, engine } = fixture();
+  await engine.start('eng', 'cmn');
+  api.stopSpeech.mockRejectedValueOnce(new Error('Audio service interrupted'));
+  await engine.end();
+  expect(db.end).toHaveBeenCalledWith('s');
+  expect(engine.session).toBeUndefined();
+  expect(api.setSessionActive).toHaveBeenLastCalledWith(false);
+});

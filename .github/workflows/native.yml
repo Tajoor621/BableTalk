@@ -58,6 +58,7 @@ jobs:
         with:
           name: BabelTalk-Android-development-test
           path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
           retention-days: 7
   ios:
     needs: nawah
@@ -78,5 +79,13 @@ jobs:
       - run: python3 scripts/fetch_ocr.py
       - run: pod install
         working-directory: ios
-      - run: xcodebuild -workspace BabelTalk.xcworkspace -scheme BabelTalk -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+      - run: xcodebuild -workspace BabelTalk.xcworkspace -scheme BabelTalk -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build-ci CODE_SIGNING_ALLOWED=NO build
         working-directory: ios
+      - name: Verify the iOS application includes its offline resources
+        working-directory: ios
+        run: |
+          app=build-ci/Build/Products/Release-iphoneos/BabelTalk.app
+          test -s "$app/main.jsbundle"
+          for model in eng urd ara pus chi_sim chi_tra; do
+            test -s "$app/tessdata/$model.traineddata"
+          done

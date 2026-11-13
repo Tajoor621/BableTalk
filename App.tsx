@@ -24,7 +24,7 @@ import {
   languageNotice,
   Speaker,
 } from './src/linguistics/languages';
-import { downloadModels, verifyModels } from './src/models/store';
+import { downloadModels } from './src/models/store';
 import { requireLocal, Route, Voice } from './src/native';
 import {
   exportSession,
@@ -124,7 +124,7 @@ function BabelTalk() {
   const busy = useRef(false);
   const foreground = useRef(true);
   const mounted = useRef(true);
-  const recordingSpeaker = useRef<Speaker>('B');
+  const recordingStop = useRef<Promise<void> | undefined>(undefined);
   const busyUi = work !== 'idle';
   function updateRow(row: Utterance) {
     if (mounted.current) {
@@ -152,7 +152,7 @@ function BabelTalk() {
       report(e);
     } finally {
       busy.current = false;
-      if (mounted.current && !recorder.current) {
+      if (mounted.current && !recorder.current && !recordingStop.current) {
         setWork('idle');
       }
     }
@@ -161,22 +161,30 @@ function BabelTalk() {
     await sessions.init();
     setSaved(await sessions.list());
   }
-  async function finishRecording(flush = true) {
+  function finishRecording(flush = true): Promise<void> {
+    if (recordingStop.current) {
+      return recordingStop.current;
+    }
     const current = recorder.current;
-    recorder.current = undefined;
     if (!current) {
-      return;
+      return Promise.resolve();
     }
+    recorder.current = undefined;
     setWork('processing');
-    try {
-      await current.stop(flush);
-      await Promise.all(pending.current);
-    } finally {
-      pending.current = [];
-      if (mounted.current) {
-        setWork('idle');
+    const stopped = (async () => {
+      try {
+        await current.stop(flush);
+      } finally {
+        await Promise.allSettled(pending.current);
+        pending.current = [];
+        recordingStop.current = undefined;
+        if (mounted.current && !busy.current) {
+          setWork('idle');
+        }
       }
-    }
+    })();
+    recordingStop.current = stopped;
+    return stopped;
   }
   useEffect(() => {
     mounted.current = true;
@@ -195,7 +203,7 @@ function BabelTalk() {
       foreground.current = false;
       listener.remove();
       void (async () => {
-        await finishRecording(false);
+        await finishRecording(false).catch(() => {});
         await engine.end();
       })().catch(() => {});
     };
@@ -205,7 +213,6 @@ function BabelTalk() {
   async function begin() {
     await action(async () => {
       setWork('preparing');
-      await verifyModels('multilingual');
       const value = await engine.start(a, b, { dialect: useDialect });
       setSession(value);
       setRows([]);
@@ -224,7 +231,6 @@ function BabelTalk() {
       }
       setWork('preparing');
       setSpeaker(who);
-      recordingSpeaker.current = who;
       const permission =
         Platform.OS === 'ios'
           ? PERMISSIONS.IOS.MICROPHONE
@@ -244,7 +250,7 @@ function BabelTalk() {
           onText: value => {
             const task = engine
               .receive(
-                recordingSpeaker.current,
+                who,
                 value.text,
                 value.detectedLanguage,
                 value.warning,
@@ -272,7 +278,7 @@ function BabelTalk() {
         await current.start();
         if (!foreground.current) {
           await finishRecording(false);
-        } else {
+        } else if (recorder.current === current) {
           setWork('recording');
         }
       } catch (e) {
@@ -285,11 +291,14 @@ function BabelTalk() {
   async function end() {
     await action(async () => {
       setWork('processing');
-      await finishRecording();
+      const [stopped] = await Promise.allSettled([finishRecording()]);
       await engine.end();
       setSession(undefined);
       setMessage('Session saved on this device.');
       await refresh();
+      if (stopped.status === 'rejected') {
+        report(stopped.reason);
+      }
     });
   }
   async function play(row: Utterance) {
@@ -629,7 +638,7 @@ function BabelTalk() {
               <Button
                 secondary
                 label="End session & save"
-                disabled={busyUi}
+                disabled={busyUi && work !== 'recording'}
                 onPress={() => {
                   void end();
                 }}
@@ -807,8 +816,7 @@ function BabelTalk() {
               onPress={() => {
                 void action(async () => {
                   setWork('preparing');
-                  await verifyModels('multilingual');
-                  setMessage('Speech models verified.');
+                              setMessage('Speech models verified.');
                 });
               }}
             />
@@ -892,8 +900,8 @@ function BabelTalk() {
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.label}>How to have a conversation</Text>
           <Text style={styles.body}>
-            1. In Models, download the speech models and prepare the selected
-            translation pair on Wi-Fi.{'\n\n'}2. Select your language (A) and
+            1. In Models, prepare the selected translation pair on Wi-Fi.
+            Download the speech models if you want to use the microphone.{'\n\n'}2. Select your language (A) and
             the other speaker’s language (B). Connect headphones for private
             listening.{'\n\n'}3. Start a session. Tap B speaks, let the other
             person talk, then Stop & translate. Review the words and tap Play
@@ -912,9 +920,9 @@ function BabelTalk() {
             research integration, not a certified label for every short
             utterance. The app preserves the original Arabic; it does not invent
             a dialect-to-MSA dictionary. Urdu, Pashto and English have no
-            dialect labels here.{'\n\n'}Pashto currently saves experimental
-            transcripts only. Missing translation or voice support is shown
-            explicitly.
+            dialect labels here. Chinese conversation speech uses Mandarin.
+            The Translate window also has experimental Cantonese speech
+            and Pashto speech-to-English.
           </Text>
           <Text style={styles.label}>Offline, privacy and audio</Text>
           <Text style={styles.body}>
