@@ -172,9 +172,10 @@ it('preserves Pashto speech when English audio translation fails', async () => {
   await pipeline.start();
   mockAudio(Buffer.alloc(512 * 2 * 10).toString('base64'));
   await pipeline.stop();
-  expect(mockTranscribe).toHaveBeenNthCalledWith(
-    2, expect.any(ArrayBuffer), expect.objectContaining({ language: 'ps', translate: true }),
-  );
+  expect(mockTranscribe).toHaveBeenCalledTimes(2);
+  const [audio, options] = mockTranscribe.mock.calls[1];
+  expect(audio).toBe(mockTranscribe.mock.calls[0][0]);
+  expect(options).toMatchObject({ language: 'ps', translate: true });
   expect(callbacks.onText).toHaveBeenCalledWith(
     expect.objectContaining({ text: 'سلام', englishTranslation: undefined }),
   );
