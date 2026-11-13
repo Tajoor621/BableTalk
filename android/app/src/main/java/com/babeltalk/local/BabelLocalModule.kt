@@ -42,7 +42,7 @@ class BabelLocalModule(private val app: ReactApplicationContext) : ReactContextB
   init { audio.registerAudioDeviceCallback(deviceCallback, main) }
   private val translators = mutableMapOf<String, Translator>()
   override fun getName() = "BabelLocal"
-  private fun valid(code: String) = code in setOf("en", "ur", "ar")
+  private fun valid(code: String) = code in setOf("en", "ur", "ar", "zh")
   private fun translator(a: String, b: String): Translator {
     require(valid(a) && valid(b) && a != b) { "Unsupported translation pair" }
     return translators.getOrPut("$a:$b") { Translation.getClient(TranslatorOptions.Builder().setSourceLanguage(a).setTargetLanguage(b).build()) }

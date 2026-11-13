@@ -98,7 +98,7 @@ function LanguageSelector({
 }
 function BabelTalk() {
   const engine = useRef(new Conversation()).current;
-  const [translatorOpen, setTranslatorOpen] = useState(false);
+  const [translatorOpen, setTranslatorOpen] = useState<'translate' | 'chinese-note'>();
   const [tab, setTab] = useState<Tab>('Conversation');
   const [a, setA] = useState<Language>('eng');
   const [b, setB] = useState<Language>('urd');
@@ -471,12 +471,27 @@ function BabelTalk() {
         disabled={busyUi || !!session}
         onPress={() => {
           if (!busy.current && !engine.session) {
-            setTranslatorOpen(true);
+            setTranslatorOpen('translate');
+          }
+        }}
+      />
+      <Button
+        label="Chinese note → English"
+        secondary
+        disabled={busyUi || !!session}
+        onPress={() => {
+          if (!busy.current && !engine.session) {
+            setTranslatorOpen('chinese-note');
           }
         }}
       />
       {translatorOpen && (
-        <TranslateWindow initialSource={a} initialTarget={b} onClose={() => setTranslatorOpen(false)} />
+        <TranslateWindow
+          initialSource={translatorOpen === 'chinese-note' ? 'cmn' : a}
+          initialTarget={translatorOpen === 'chinese-note' ? 'eng' : b}
+          chineseNote={translatorOpen === 'chinese-note'}
+          onClose={() => setTranslatorOpen(undefined)}
+        />
       )}
       <View style={styles.tabs}>
         {(['Conversation', 'Sessions', 'Models', 'Help'] as Tab[]).map(

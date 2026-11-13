@@ -37,8 +37,19 @@ export async function verifyFile(model: ModelSpec) {
   return path;
 }
 export async function verifyModels(
-  mode: 'english' | 'multilingual' = 'english',
+  mode: 'english' | 'multilingual' | 'cantonese' = 'english',
 ) {
+  if (mode === 'cantonese') {
+    const vadModel = manifest.models.find(model => model.file === 'silero_vad.onnx');
+    if (!vadModel) {
+      throw new Error('Voice activity model metadata is missing.');
+    }
+    const [vad, whisper] = await Promise.all([
+      verifyFile(vadModel),
+      verifyFile(optionalModel('cantonese')),
+    ]);
+    return { vad, whisper };
+  }
   for (const model of coreModels(mode)) {
     await verifyFile(model);
   }
@@ -57,9 +68,17 @@ export function setCaptureActive(active: boolean) {
   }
   captureActive = active;
 }
+function optionalModel(group: 'mms' | 'cantonese'): ModelSpec {
+  const model = optional.models.find(item => item.group === group);
+  if (!model) {
+    throw new Error('Optional speech model metadata is missing.');
+  }
+  return model;
+}
+
 export async function downloadModels(
   onProgress: (label: string, progress: number) => void,
-  includeMms = false,
+  includeMms: boolean | 'cantonese' = false,
 ) {
   if (downloadActive || captureActive) {
     throw new Error('End recording and wait for the current download');
@@ -68,7 +87,7 @@ export async function downloadModels(
   try {
     await RNFS.mkdir(modelDirectory, { NSURLIsExcludedFromBackupKey: true });
     const models: ModelSpec[] = includeMms
-      ? optional.models
+      ? [optionalModel(includeMms === true ? 'mms' : includeMms)]
       : coreModels('multilingual');
     for (const model of models) {
       try {
@@ -117,5 +136,5 @@ export async function downloadModels(
   }
 }
 export async function verifyMms() {
-  return verifyFile(optional.models[0]);
+  return verifyFile(optionalModel('mms'));
 }

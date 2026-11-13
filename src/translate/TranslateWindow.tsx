@@ -16,7 +16,9 @@ import { PERMISSIONS, request, RESULTS } from 'react-native-permissions';
 import { Pipeline } from '../audio/pipeline';
 import { Language, languages, scriptNotice, sentenceChunks } from '../linguistics/languages';
 import { requireLocal } from '../native';
+import { downloadModels } from '../models/store';
 import {
+  type ChineseScript,
   importTranscript,
   pickPhoto,
   pickText,
@@ -48,12 +50,15 @@ function Choice({ label, onPress, disabled, selected }: {
   );
 }
 
-export function TranslateWindow({ initialSource, initialTarget, onClose }: {
+export function TranslateWindow({ initialSource, initialTarget, chineseNote = false, onClose }: {
   initialSource: Language;
   initialTarget: Language;
+  chineseNote?: boolean;
   onClose: () => void;
 }) {
-  const [mode, setMode] = useState<Mode>('Text');
+  const [mode, setMode] = useState<Mode>(chineseNote ? 'Photo' : 'Text');
+  const [cantonese, setCantonese] = useState(false);
+  const [chineseScript, setChineseScript] = useState<ChineseScript>('simplified');
   const [source, setSource] = useState(initialSource);
   const [target, setTarget] = useState(initialTarget);
   const [input, setInput] = useState('');
@@ -73,6 +78,8 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
   const speechTranslation = source === 'pus' && target === 'eng' &&
     (mode === 'Recording' || mode === 'Live voice' || mode === 'Screen audio');
   const locked = busy || recording;
+  const chineseSpeech = source === 'cmn' &&
+    (mode === 'Recording' || mode === 'Live voice' || mode === 'Screen audio');
 
   function report(reason: unknown) {
     if (mounted.current) {
@@ -200,7 +207,7 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
         report(reason);
         void stop(false).catch(report);
       },
-    }, { language: source, source: screen ? screenAudioSource() : undefined, translatePashtoSpeech: speechTranslation });
+    }, { language: source, source: screen ? screenAudioSource() : undefined, translatePashtoSpeech: speechTranslation, cantonese: chineseSpeech && cantonese });
     live.current = { pipeline, screen };
     try {
       await pipeline.start();
@@ -220,7 +227,7 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
   async function loadInput() {
     setStatus(mode === 'Recording' ? 'Choose an audio or video file…' : 'Choose a file…');
     if (mode === 'Recording') {
-      const result = await importTranscript(source, speechTranslation, percent => {
+      const result = await importTranscript(source, speechTranslation, chineseSpeech && cantonese, percent => {
         setStatus(`Transcribing recording… ${percent}%`);
       });
       if (!result) {
@@ -235,7 +242,7 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
       setStatus('Review the transcript below.');
       return;
     }
-    const value = mode === 'Photo' ? await pickPhoto(source) : await pickText();
+    const value = mode === 'Photo' ? await pickPhoto(source, chineseScript) : await pickText();
     if (value === null) {
       setStatus('');
       return;
@@ -303,6 +310,46 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
           </View>
           {selectLanguage('From', source, setSource)}
           {selectLanguage('To', target, setTarget)}
+          {mode === 'Photo' && source === 'cmn' && (
+            <View>
+              <Text style={styles.label}>Chinese writing system</Text>
+              <View style={styles.row}>
+                <Choice label="Simplified 简体" selected={chineseScript === 'simplified'}
+                  disabled={locked} onPress={() => setChineseScript('simplified')} />
+                <Choice label="Traditional 繁體" selected={chineseScript === 'traditional'}
+                  disabled={locked} onPress={() => setChineseScript('traditional')} />
+              </View>
+              <Text style={styles.note}>
+                Use a sharp photo with even light. Check the recognised characters before translating, especially names and numbers.
+              </Text>
+            </View>
+          )}
+          {chineseSpeech && (
+            <View>
+              <Text style={styles.label}>Spoken variety</Text>
+              <View style={styles.row}>
+                <Choice label="Mandarin 普通话" selected={!cantonese} disabled={locked}
+                  onPress={() => setCantonese(false)} />
+                <Choice label="Cantonese 粵語" selected={cantonese} disabled={locked}
+                  onPress={() => setCantonese(true)} />
+              </View>
+              {cantonese && (
+                <Choice label="Download Cantonese speech model (574 MB)" disabled={locked}
+                  onPress={() => {
+                    void run(async () => {
+                      setStatus('Preparing Cantonese speech model…');
+                      await downloadModels((_file, fraction) => {
+                        setStatus(`Downloading Cantonese speech model… ${Math.floor(fraction * 100)}%`);
+                      }, 'cantonese');
+                      setStatus('Cantonese speech model ready. Install the core speech models in Models if needed.');
+                    });
+                  }} />
+              )}
+              <Text style={styles.note}>{cantonese
+                ? 'Cantonese speech is experimental. Review colloquial wording before translating.'
+                : 'Mandarin uses the core speech model. Other regional varieties may need manual correction.'}</Text>
+            </View>
+          )}
           {!canTranslate && (
             <Text style={styles.note}>{speechTranslation
               ? 'Experimental Pashto speech to English. Corrections change the source transcript only.'
@@ -317,7 +364,7 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
           )}
           <View style={styles.row}>
             {mode === 'Text' || mode === 'Photo' || mode === 'Recording' ? (
-              <Choice label={mode === 'Text' ? 'Open text file' : mode === 'Photo' ? 'Read photo' : 'Transcribe recording'}
+              <Choice label={mode === 'Text' ? 'Open text file' : mode === 'Photo' ? (source === 'cmn' ? 'Read Chinese note' : 'Read photo') : 'Transcribe recording'}
                 disabled={locked} onPress={() => { void run(loadInput); }} />
             ) : (
               <Choice label={recording ? 'Stop capture' : 'Start capture'}

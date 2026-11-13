@@ -122,7 +122,8 @@ static NSString *DecodeRecording(NSURL *url, NSError **error) {
 }
 
 static NSString *RecogniseWithVision(CGImageRef image, NSString *language) {
-  NSString *tag = @{@"eng": @"en", @"urd": @"ur", @"ara": @"ar", @"pus": @"ps"}[language];
+  NSString *tag = @{@"eng": @"en", @"urd": @"ur", @"ara": @"ar", @"pus": @"ps",
+    @"chi_sim": @"zh-Hans", @"chi_tra": @"zh-Hant"}[language];
   VNRecognizeTextRequest *request = [VNRecognizeTextRequest new];
   request.recognitionLevel = VNRequestTextRecognitionLevelAccurate;
   NSArray<NSString *> *supported = [request supportedRecognitionLanguagesAndReturnError:nil];
@@ -137,7 +138,7 @@ static NSString *RecogniseWithVision(CGImageRef image, NSString *language) {
     return nil;
   }
   request.recognitionLanguages = @[selected];
-  request.usesLanguageCorrection = YES;
+  request.usesLanguageCorrection = ![language hasPrefix:@"chi_"];
   VNImageRequestHandler *handler = [[VNImageRequestHandler alloc] initWithCGImage:image options:@{}];
   BOOL success = [handler performRequests:@[request] error:nil];
   if (!success) return nil;
@@ -146,7 +147,12 @@ static NSString *RecogniseWithVision(CGImageRef image, NSString *language) {
     VNRecognizedText *candidate = [observation topCandidates:1].firstObject;
     if (candidate.string.length) [lines addObject:candidate.string];
   }
-  return [lines componentsJoinedByString:@"\n"];
+  NSString *text = [lines componentsJoinedByString:@"\n"];
+  if ([language hasPrefix:@"chi_"] &&
+      [text rangeOfString:@"\\p{Han}" options:NSRegularExpressionSearch].location == NSNotFound) {
+    return nil;
+  }
+  return text;
 }
 
 static NSString *RecogniseWithTesseract(CGImageRef image, NSString *language, NSError **error) {
@@ -188,7 +194,7 @@ static NSString *RecogniseWithTesseract(CGImageRef image, NSString *language, NS
 }
 
 static NSString *RecognisePhoto(NSURL *url, NSString *language, NSError **error) {
-  if (![@[@"eng", @"urd", @"ara", @"pus"] containsObject:language]) {
+  if (![@[@"eng", @"urd", @"ara", @"pus", @"chi_sim", @"chi_tra"] containsObject:language]) {
     *error = MediaError(@"Choose a supported photo language.");
     return nil;
   }

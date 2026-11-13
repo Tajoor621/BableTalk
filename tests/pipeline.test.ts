@@ -3,6 +3,7 @@ import { Pipeline } from '../src/audio/pipeline';
 import Capture from '../src/audio/capture';
 import { initWhisper } from 'whisper.rn/index';
 import { Silero } from '../src/audio/silero';
+import { verifyModels } from '../src/models/store';
 let mockAudio: (data: string) => void;
 const mockRemove = jest.fn();
 const mockVadRelease = jest.fn();
@@ -180,4 +181,14 @@ it('preserves Pashto speech when English audio translation fails', async () => {
     expect.objectContaining({ text: 'سلام', englishTranslation: undefined }),
   );
   expect(callbacks.onError).not.toHaveBeenCalled();
+});
+
+it('uses the dedicated model and Cantonese token for an explicit Cantonese capture', async () => {
+  const callbacks = { onText: jest.fn(), onVad: jest.fn(), onError: jest.fn() };
+  const pipeline = new Pipeline(callbacks, { language: 'cmn', cantonese: true });
+  await pipeline.start();
+  mockAudio(Buffer.alloc(512 * 2 * 10).toString('base64'));
+  await pipeline.stop();
+  expect(verifyModels).toHaveBeenCalledWith('cantonese');
+  expect(mockTranscribe.mock.calls[0][1]).toMatchObject({ language: 'yue', translate: false });
 });

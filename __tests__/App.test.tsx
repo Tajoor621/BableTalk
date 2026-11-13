@@ -30,6 +30,7 @@ it('shows the functional conversation interface and explicit language support', 
   expect(json).toContain('BabelTalk');
   expect(json).toContain('Start session');
   expect(json).toContain('Open Translate window');
+  expect(json).toContain('Chinese note → English');
   expect(json).toContain('Urdu language identification only.');
   await act(async () => root!.unmount());
 });

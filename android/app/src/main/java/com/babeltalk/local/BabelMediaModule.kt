@@ -11,6 +11,10 @@ import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import com.facebook.react.bridge.*
+import com.google.android.gms.tasks.Tasks
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.googlecode.tesseract.android.TessBaseAPI
 import java.io.File
 import java.nio.ByteBuffer
@@ -138,7 +142,7 @@ class BabelMediaModule(private val app: ReactApplicationContext) : ReactContextB
   }
 
   private fun recognisePhoto(uri: Uri, code: String): String {
-    require(code in setOf("eng", "urd", "ara", "pus")) { "Choose a supported photo language." }
+    require(code in setOf("eng", "urd", "ara", "pus", "chi_sim", "chi_tra")) { "Choose a supported photo language." }
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     app.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
     require(bounds.outWidth > 0 && bounds.outHeight > 0) { "Choose a readable image." }
@@ -149,35 +153,57 @@ class BabelMediaModule(private val app: ReactApplicationContext) : ReactContextB
     val bitmap = app.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) }
       ?: error("Could not decode the photo.")
     try {
-      val root = File(app.filesDir, "ocr-v1")
-      val folder = File(root, "tessdata").apply { mkdirs() }
-      val model = File(folder, "$code.traineddata")
-      if (!model.exists()) {
-        val temporary = File(folder, "$code.tmp")
-        try {
-          app.assets.open("tessdata/$code.traineddata").use { input ->
-            temporary.outputStream().use { input.copyTo(it) }
-          }
-          check(temporary.renameTo(model)) { "Could not install the photo recognition model." }
-        } finally {
-          temporary.delete()
-        }
-      }
-      val engine = TessBaseAPI()
+      val oriented = orientPhoto(uri, bitmap)
       try {
-        check(engine.init(root.path, code)) { "Could not load the photo recognition model." }
-        val oriented = orientPhoto(uri, bitmap)
-        try {
-          engine.setImage(oriented)
-          return engine.getUTF8Text().orEmpty()
-        } finally {
-          if (oriented !== bitmap) oriented.recycle()
+        if (code.startsWith("chi_")) {
+          val recognised = recogniseChinese(oriented)
+          if (recognised != null) return recognised
         }
+        return recogniseWithTesseract(oriented, code)
       } finally {
-        engine.recycle()
+        if (oriented !== bitmap) oriented.recycle()
       }
     } finally {
       bitmap.recycle()
+    }
+  }
+
+  private fun recogniseChinese(bitmap: Bitmap): String? {
+    val engine = TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
+    return try {
+      val text = Tasks.await(engine.process(InputImage.fromBitmap(bitmap, 0))).text
+      text.takeIf { candidate ->
+        candidate.codePoints().anyMatch { Character.UnicodeScript.of(it) == Character.UnicodeScript.HAN }
+      }
+    } catch (error: java.util.concurrent.ExecutionException) {
+      null
+    } finally {
+      engine.close()
+    }
+  }
+
+  private fun recogniseWithTesseract(bitmap: Bitmap, code: String): String {
+    val root = File(app.filesDir, "ocr-v1")
+    val folder = File(root, "tessdata").apply { mkdirs() }
+    val model = File(folder, "$code.traineddata")
+    if (!model.exists()) {
+      val temporary = File(folder, "$code.tmp")
+      try {
+        app.assets.open("tessdata/$code.traineddata").use { input ->
+          temporary.outputStream().use { input.copyTo(it) }
+        }
+        check(temporary.renameTo(model)) { "Could not install the photo recognition model." }
+      } finally {
+        temporary.delete()
+      }
+    }
+    val engine = TessBaseAPI()
+    try {
+      check(engine.init(root.path, code)) { "Could not load the photo recognition model." }
+      engine.setImage(bitmap)
+      return engine.getUTF8Text().orEmpty()
+    } finally {
+      engine.recycle()
     }
   }
 

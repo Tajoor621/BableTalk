@@ -46,7 +46,7 @@ export class Pipeline {
   private stopRequested = false;
   constructor(
     private callbacks: Callbacks,
-    private options: { language?: Language; useMms?: boolean; source?: AudioSource; translatePashtoSpeech?: boolean } = {},
+    private options: { language?: Language; useMms?: boolean; source?: AudioSource; translatePashtoSpeech?: boolean; cantonese?: boolean } = {},
   ) {
     this.segmenter = new Segmenter(options.language ? 4 : 8);
   }
@@ -73,7 +73,7 @@ export class Pipeline {
   private async initialize() {
     setCaptureActive(true);
     const paths = await verifyModels(
-      this.options.language ? 'multilingual' : 'english',
+      this.options.cantonese ? 'cantonese' : this.options.language ? 'multilingual' : 'english',
     );
     this.assertOpen();
     if (this.options.useMms) {
@@ -193,7 +193,7 @@ export class Pipeline {
       const route = detectedLanguage || selected;
       const task = this.whisper!.transcribeData(
         segment.samples.buffer as ArrayBuffer,
-        { language: languages[route].tag, translate: false, maxThreads: 2 },
+        { language: this.options.cantonese ? 'yue' : languages[route].tag, translate: false, maxThreads: 2 },
       );
       const result = await task.promise;
       const text = result.result.trim();

@@ -85,3 +85,13 @@ Do not substitute guessed test results or published model benchmark numbers.
   restart, and that unrelated microphone speech does not enter the transcript.
 - On both platforms, deny microphone permission, test Stop playback, and repeat
   a capture after backgrounding. Verify the final transcript is editable.
+
+## Chinese notes and speech
+
+- On both platforms in airplane mode after setup, use the Chinese note shortcut
+  with clear handwritten Simplified and Traditional samples. Verify native OCR,
+  correction, English translation, and export. Record character error rates
+  separately from translation errors. Include names, dates and handwritten numbers.
+- Compare Mandarin and Cantonese recordings with native-speaker references.
+  Test that the Cantonese choice requests its separate download, then works
+  with the network off. Verify memory use and latency independently.

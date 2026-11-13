@@ -41,9 +41,9 @@ no API key, and no cloud speech or translation call in that path.
 - 16 kHz mono PCM16 capture, with Silero ONNX streaming voice detection.
   Conversation mode keeps speech as short as 128 ms so a brief yes or no
   can survive.
-- Multilingual quantised Whisper base for English, Urdu, and Arabic, plus
+- Multilingual quantised Whisper base for English, Urdu, Arabic, and Chinese, plus
   experimental Pashto transcription.
-- English, Urdu, and Arabic translate with each other through on-device
+- English, Urdu, Arabic, and Chinese translate with each other through on-device
   ML Kit. Pashto translation is unavailable. An English pivot is not used
   to invent a missing Pashto model.
 - Speaker A and speaker B are explicit. The phone does not guess who spoke.
@@ -105,12 +105,12 @@ For voice, also install the multilingual speech model from Models.
 | Input | How to use it | Availability |
 | --- | --- | --- |
 | Text | Type, paste, or open a UTF-8 text file up to 256 KiB. | Android and iOS |
-| Photo | Select a photo, check the recognised text, and translate it. | Both platforms support English, Urdu, Arabic, and Pashto with bundled Tesseract models. iOS tries Apple Vision first when available. |
+| Photo | Select a photo, check the recognised text, and translate it. | Both platforms support English, Urdu, Arabic, Pashto, and both Chinese writing systems with bundled models. iOS tries Apple Vision first when available. |
 | Recording | Select an audio file or video up to 10 minutes in a format the device can decode. The app reads its audio track. | Android and iOS |
 | Live voice | Start microphone capture for the selected source language. | Android and iOS |
 | Screen audio | Approve Android's screen-sharing prompt, then play media in an app that allows audio capture. Return to BabelTalk to read the transcript or stop capture. | Android 10 and later |
 
-English, Urdu, and Arabic translate offline after model setup. The
+English, Urdu, Arabic, and Chinese translate offline after model setup. The
 Translate window also offers experimental Pashto speech to English using
 multilingual Whisper. Pashto text translation and translation into Pashto
 remain unavailable. Review names, numbers, and
@@ -124,11 +124,30 @@ in the Translate window. It does not capture screen pixels, calls, or
 audio from apps that block capture. On iOS, save a screen recording to Files and open it from **Recording**. The app uses a temporary WAV in private cache for imported
 audio and deletes it after transcription. Live audio stays in memory.
 
+### Chinese handwritten notes
+
+Tap **Chinese note → English**, choose **Simplified** or **Traditional**,
+and use **Read Chinese note** to open a photo. Review or correct the
+recognised Chinese before translating. On first use, download the
+Chinese–English translation pair over Wi-Fi. The photo engines are bundled
+and operate offline. Android uses ML Kit Chinese OCR, and iOS uses Vision
+when supported. The selected Tesseract model provides an offline fallback.
+Clear handwriting, good lighting and a tightly framed image improve
+recognition. Highly cursive or vertical notes need extra review.
+
+In **Recording**, **Live voice**, or **Screen audio**, choose Chinese as the
+source, then select Mandarin or Cantonese. Cantonese uses a separate
+574 MB Whisper Large v3 Turbo download and the core voice activity model.
+Cantonese output can contain colloquial wording that the general Chinese
+text translator may misread. Other regional varieties have no dedicated
+speech mode. The photo feature recognises writing and cannot infer the
+writer's spoken variety.
+
 ### Device checks
 
 After downloading models, switch to airplane mode and try text, a
 printed photo, an imported recording, and live voice. Use at least one
-English, Urdu, and Arabic sample with a known reference, and check the
+English, Urdu, Arabic, and Chinese sample with a known reference, and check the
 source and translation independently. Verify offline playback with an
 installed voice and export only when requested. On Android, approve and
 cancel the system capture prompt, then test permitted media playback and
@@ -142,6 +161,7 @@ the airplane-mode check does not depend on streaming.
 | English | Multilingual Whisper base | On-device, with Urdu and Arabic |
 | Urdu | Multilingual Whisper base | On-device, with English and Arabic |
 | Arabic | Multilingual Whisper base | On-device, with English and Urdu. Optional dialect candidate after enough same-speaker text. |
+| Chinese | Mandarin in Conversation. Mandarin and experimental Cantonese in Translate. | Offline text translation through the Chinese model. |
 | Pashto | Experimental transcription | Experimental speech to English in the Translate window. Text translation and translation into Pashto are unavailable. |
 
 ## Privacy

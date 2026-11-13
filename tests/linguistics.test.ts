@@ -9,11 +9,12 @@ import { acceptLanguage, rankLanguages } from '../src/linguistics/mms';
 import labels from '../src/linguistics/mms-labels.json';
 jest.mock('onnxruntime-react-native', () => ({}));
 jest.mock('../src/models/store', () => ({ verifyMms: jest.fn() }));
-it('maps four language tags without conflating Pashto or Hindi', () => {
+it('maps language tags without conflating Pashto or Hindi', () => {
   expect(isoFromTag('ur-PK')).toBe('urd');
   expect(isoFromTag('ps-AF')).toBe('pus');
   expect(isoFromTag('ar-SA')).toBe('ara');
   expect(isoFromTag('en-GB')).toBe('eng');
+  expect(isoFromTag('zh-Hant')).toBe('cmn');
   expect(isoFromTag('hi')).toBeUndefined();
 });
 it('keeps Urdu and Arabic sentence punctuation and bounds long speech chunks', () => {
@@ -59,4 +60,14 @@ it('uses stable softmax and the actual MMS label mapping', () => {
   logits[Number(index)] = 1000;
   expect(rankLanguages(logits)[0]).toEqual({ code: 'urd', score: 1 });
   expect(() => rankLanguages([NaN])).toThrow();
+});
+
+it('accepts both Chinese writing systems and preserves Chinese sentence boundaries', () => {
+  expect(scriptNotice('今天下午请给我打电话。', 'cmn')).toBeNull();
+  expect(scriptNotice('今天下午請給我打電話。', 'cmn')).toBeNull();
+  expect(sentenceChunks('今天見。你在哪裡？我到了！')).toEqual([
+    '今天見。', '你在哪裡？', '我到了！',
+  ]);
+  expect(acceptLanguage([{ code: 'cmn', score: 0.95 }], 5)).toBe('cmn');
+  expect(acceptLanguage([{ code: 'yue', score: 0.95 }], 5)).toBeUndefined();
 });

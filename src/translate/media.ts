@@ -22,8 +22,12 @@ function media() {
 export function pickText() {
   return media().pickText();
 }
-export function pickPhoto(language: Language) {
-  return media().pickPhoto(language);
+export type ChineseScript = 'simplified' | 'traditional';
+export function pickPhoto(language: Language, script: ChineseScript) {
+  const model = language === 'cmn'
+    ? script === 'traditional' ? 'chi_tra' : 'chi_sim'
+    : language;
+  return media().pickPhoto(model);
 }
 export const screenAudioAvailable =
   Platform.OS === 'android' && Number(Platform.Version) >= 29;
@@ -40,6 +44,7 @@ export function screenAudioSource(): AudioSource {
 export async function importTranscript(
   language: Language,
   translatePashtoSpeech: boolean,
+  cantonese: boolean,
   onProgress: (percent: number) => void,
 ) {
   const [{ default: RNFS }, { initWhisper }, { Silero }, { PcmFramer, Segmenter }, models] =
@@ -48,7 +53,7 @@ export async function importTranscript(
       import('whisper.rn/index'),
       import('../audio/silero'),
       import('../audio/segmenter'),
-      verifyModels('multilingual'),
+      verifyModels(cantonese ? 'cantonese' : 'multilingual'),
     ]);
   const path = await media().pickAudio();
   if (!path) {
@@ -73,7 +78,7 @@ export async function importTranscript(
         context ??= await initWhisper({ filePath: models.whisper, useGpu: false });
         const audio = samples.buffer as ArrayBuffer;
         const text = (await context.transcribeData(audio, {
-          language: languages[language].tag,
+          language: cantonese ? 'yue' : languages[language].tag,
           translate: false,
           maxThreads: 2,
         }).promise).result.trim();
@@ -150,7 +155,7 @@ export function translationChunks(value: string, limit = 3000): string[] {
     let end = Math.min(start + limit, chars.length);
     if (end < chars.length) {
       let split = end;
-      while (split > start + limit / 2 && !/\s|[.!?؟۔]/u.test(chars[split - 1])) {
+      while (split > start + limit / 2 && !/\s|[.!?。！？؟۔]/u.test(chars[split - 1])) {
         split--;
       }
       if (split > start + limit / 2) {

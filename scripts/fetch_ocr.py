@@ -9,6 +9,8 @@ FILES = {
     "urd.traineddata": "715a159d4abea25294c82971be28be215b3d1c4a",
     "ara.traineddata": "c8d129c67821c1592cac46836686b057ecc203dc",
     "pus.traineddata": "220cdf92efdc76a227439c0b8734196af9743b98",
+    "chi_sim.traineddata": "388bac276d033d06e5ed5ba7a7ad14ae58f97dab",
+    "chi_tra.traineddata": "1955cd8b8d076b898616e9c2c1ace65b43105356",
     "LICENSE": "d645695673349e3947e8e5ae42332d0ac3164cd7",
 }
 

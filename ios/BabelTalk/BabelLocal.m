@@ -22,7 +22,7 @@ RCT_EXPORT_MODULE();
 + (BOOL)requiresMainQueueSetup { return YES; }
 - (dispatch_queue_t)methodQueue { return dispatch_get_main_queue(); }
 - (instancetype)init { if (self = [super init]) { _translators = [NSMutableDictionary new]; [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(routeChanged:) name:AVAudioSessionRouteChangeNotification object:nil]; } return self; }
-- (BOOL)valid:(NSString *)code { return [@[@"en", @"ur", @"ar"] containsObject:code]; }
+- (BOOL)valid:(NSString *)code { return [@[@"en", @"ur", @"ar", @"zh"] containsObject:code]; }
 - (MLKTranslator *)translator:(NSString *)a target:(NSString *)b {
   NSString *key = [NSString stringWithFormat:@"%@:%@", a, b];
   if (!self.translators[key]) {
