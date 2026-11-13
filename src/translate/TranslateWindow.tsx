@@ -137,7 +137,6 @@ export function TranslateWindow({ initialSource, initialTarget, onClose }: {
       void stop(false).catch(() => {});
     };
     // The listeners read the current capture through its ref.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function updateInput(value: string) {
