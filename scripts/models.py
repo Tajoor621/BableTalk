@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phase 1 model acquisition. No network activity occurs in the mobile app."""
+"""Download, verify, and install model files for development."""
 import argparse
 import hashlib
 import json
@@ -25,10 +25,13 @@ def main():
     parser.add_argument('action', choices=['download', 'verify', 'install-android'])
     parser.add_argument('--serial', help='ADB device serial')
     parser.add_argument('--mms',action='store_true',help='Include optional 974 MB non-commercial MMS language ID model')
+    parser.add_argument('--cantonese', action='store_true', help='Include optional 574 MB Cantonese speech model')
     args = parser.parse_args()
     models = json.loads(LOCK.read_text())['models']
-    if args.mms:
-        models += json.loads((ROOT/'optional-models.lock.json').read_text())['models']
+    groups = {group for group in ('mms', 'cantonese') if getattr(args, group)}
+    if groups:
+        optional = json.loads((ROOT/'optional-models.lock.json').read_text())['models']
+        models += [model for model in optional if model['group'] in groups]
     MODELS.mkdir(exist_ok=True)
     for model in models:
         path = MODELS / model['file']

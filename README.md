@@ -138,6 +138,7 @@ recognition. Highly cursive or vertical notes need extra review.
 In **Recording**, **Live voice**, or **Screen audio**, choose Chinese as the
 source, then select Mandarin or Cantonese. Cantonese uses a separate
 574 MB Whisper Large v3 Turbo download and the core voice activity model.
+For development, use `python3 scripts/models.py download --cantonese`.
 Cantonese output can contain colloquial wording that the general Chinese
 text translator may misread. Other regional varieties have no dedicated
 speech mode. The photo feature recognises writing and cannot infer the
